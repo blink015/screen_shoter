@@ -2,26 +2,26 @@ import os
 import sys
 import time
 import shutil
+import re
 from typing import List
 from pprint import pprint
 from dependency_check import DependencyCheck
 from device_getter import DeviceGetter
+from shot_utils import ShotUtils
 from config import Config
 
-# static方法，定义Android截图类，iOS截图类，还是都放到main.py里？
-
-# 其他类先固定方法，加不加_，固定后好引用
-# 该加static的加一下，比如Android截图/截屏类，方便引用
 
 class ScreenShoter:
     """
     main class
     todo, lots of error handler to add...
+    todo, future? get device crash log???
     """
     def __init__(self):
         self.config = Config()
         self.dependency_check = DependencyCheck()
         self.devices = DeviceGetter().devices
+        self.shot_utils = ShotUtils()
 
         self.default_save_path = self.config.default_save_path
         self.default_name_base = self.config.default_name_base
@@ -115,31 +115,209 @@ class ScreenShoter:
         print("\n" + self.dependency_check.msg)
         input("press enter to start: ")
 
-    def main(self):
-        # 判断是否有多个设备，是进入选择页，否进入主界面
+    def device_select_interface_abandon(self) -> str or None:
+        """
+        this method is abandoned
+        no device UI / select device UI
+        specify device by set the instance variable
+        """
+        os.system("clear")
+        if self.devices:
+            if len(self.devices) == 1:  # distinguish number of devices in main method, don't call this method if number is 1
+                pass
+                return None
+            else:
+                print("please select your target device:")
+                counter = 1
+                for k, v in self.devices.items():
+                    if v["os"] == "Android" or v["os"] == "iOS":  # in case of display infos separately
+                        print("{}. name: {}\tos: {}\tos_version: {}".
+                              format(counter, v["product_name"].ljust(21, " "),
+                                     v["os"].ljust(9, " "), v["os_version"]))
+                    else:
+                        raise Exception("no 'os' attribute found within devices's dict.")
+                    counter += 1
+                number = input("type number({}-{}) here to select: ".format(1, len(self.devices)))
+                return number
+        else:
+            print("no device/simulator found...")
+            res = input("press enter to retry: ")
+            return res
 
+    def device_select_interface(self):
+        """
+        no device UI / select device UI
+        specify device by set the instance variable
+        """
+        print("please select your target device:")
+        counter = 1
+        for k, v in self.devices.items():
+            if v["os"] == "Android" or v["os"] == "iOS":  # in case of display infos separately
+                print("{}. name: {}\tos: {}\tos_version: {}".
+                      format(counter, v["product_name"].ljust(21, " "),
+                             v["os"].ljust(9, " "), v["os_version"]))
+            else:
+                raise Exception("no 'os' attribute found within devices's dict.")
+            counter += 1
 
+    def verify_input(self, input_str: str, lower_limit: int, upper_limit: int) -> bool:
+        """
+        varify if the input string is int like
+        """
+        try:
+            if re.match(r"[0-9]+", input_str):  # is number
+                if lower_limit <= int(input_str) <= upper_limit:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        except Exception as e:  # in case some werid input likt "0f" sometimes...
+            return False
 
+    def device_select_abandon(self) -> None:
+        """
+        this method ia abandoned
+        choose one device, saved to instance variable
+        todo: distinguish the "None" that no device, and the "None" that only one device???
+        """
+        counter = 1
+        while True:
+            input_str = self.device_select_interface_abandon()
+            # print("[][][][][][][][]:" + repr(input_str))  ####
+            if input_str == "":
+                # print("##################")  ####
+                self.devices = DeviceGetter().devices
+            elif input_str is not None:  # multi devices
+                input_ok = self.verify_input(input_str, 1, len(self.devices))
+                if input_ok:
+                    self.device_id = list(self.devices.keys())[int(input_str) - 1]
+                    break
+                else:
+                    pass
+            else:
+                pass
+            counter += 1
 
+    def device_select(self) -> None:
+        """
+        choose one device, saved to instance variable
+        todo: distinguish the "None" that no device, and the "None" that only one device???
+        """
+        counter = 1
+        input_desc = "type number({}-{}) to select, type enter to reload devices: \n".format(1, len(self.devices))
+        while True:
+            os.system("clear")
+            if self.devices:
+                if len(self.devices) == 1:
+                    self.device_id = list(self.devices.keys())[0]
+                    break
+                else:
+                    # os.system("clear")
+                    self.device_select_interface()
+                    number_str = input(input_desc)
+                    if self.verify_input(number_str, 1, len(self.devices)):
+                        self.device_id = list(self.devices.keys())[int(number_str) - 1]
+                        break
+                    elif number_str == "":
+                        print("reloading devices..."); time.sleep(0.7)
+                        self.devices = DeviceGetter().devices
+                    else:
+                        print("a valid number is need{}".format("."*counter)); time.sleep(1)
+            else:
+                print("no device/simulator found...")
+                input("press enter to retry: ")
+                print("reloading devices..."); time.sleep(0.7)
+                self.devices = DeviceGetter().devices
 
+            counter += 1
 
-
-        # 正式开始循环？
-
-
-
-        counter = 0  # 是
+    def choose_command(self) -> int:
+        """
+        main UI, choose one option to do something
+        """
+        cur_device_dict = self.devices[self.device_id]
+        os.system("clear")  # clear screen
+        print("current deivce: {}\t{}\t{}".format(cur_device_dict["product_name"],
+                                                  cur_device_dict["os"], cur_device_dict["os_version"], ))
+        print("choose your option below: ")
+        print("1. to take screencap;")
+        print("2. to take screenrecord (Android only!);")
+        print("9. to change target device/simulator;")
+        print("0. to display current config;")
 
         while True:
-            # 如果counter=0，进初始界面
+            num = input("your choice: ")
+            try:
+                num = int(num)
+                if num in [1, 2, 9, 0]:
+                    break
+                else:
+                    raise Exception
+            except Exception as e:
+                print("please try again...")
+        return num
 
+    def rename_file(self):
+        """
+        call the rename_file method of ShotUtils
+        """
+        msg = "print enter to continue, type a new name to rename file: "
+        new_name = input(msg)
+        if new_name:
+            while True:
+                if new_name and self.shot_utils.rename_file(new_name):
+                    break
+                else:
+                    print("please try to type an valid file name...")
+                    new_name = input(msg)
 
+    def main(self):
+        """
+        todo: include all code block of main method within try...except...?
+              on error start next round?
+        todo: "press "q" to quit any where", add one input like method
+                  q then sys.exit(); add a bit describe, sleep before quit?
+        todo: README.md
+        """
+        if len(self.devices) == 0:
+            self.device_select()
+        elif len(self.devices) == 1:
+            self.device_id = list(self.devices.keys())[0]
+        else:
+            self.device_select()
 
+        counter = 0
+        while True:
+            cmd_serial = self.choose_command()
 
-
-            # 中间可重置为0，循环后，再次触发初始界面（但肯定不一样，第一次初始界面消不掉python版本等信息……
-
-
+            if cmd_serial == 1:  # take screencap
+                if self.shot_utils.screencap(self.devices[self.device_id]["os"], self.device_id):
+                    self.rename_file()
+                else:
+                    pass  # todo: error handle
+            elif cmd_serial == 2:  # take screenrecord
+                if self.shot_utils.screenrecord(self.devices[self.device_id]["os"], self.device_id):
+                    self.rename_file()
+                else:
+                    pass  # todo: error handle
+            elif cmd_serial == 9:  # change target deivce
+                self.devices = DeviceGetter().devices
+                if len(self.devices) == 1:
+                    print("only one device detected...")
+                    input("press enter to continue:")
+                self.device_select()
+            elif cmd_serial == 0:  # show all configs
+                os.system("clear")
+                header_lines = ["all configs displayed below, ",
+                                "you can change them manually within source code: ",
+                                "class Config, method __init__ ...",
+                                " -------------------------------------------", ]  # in order to calculate rows occupied
+                print("\n".join(header_lines))
+                # self.config.print_config(4)  # why using specific value???
+                self.config.print_config(len(header_lines))
+            else:
+                raise Exception("unexpected cmd_serial occuried...")
 
             counter += 1
 
@@ -148,6 +326,9 @@ if __name__ == "__main__":
     ss = ScreenShoter()
     # print(ss.dependency_check.dependency_check)
     # print(ss.dependency_check.msg)
-    # print(ss.devices)
-    # ss.main()
-    # ss.interface()
+    # pprint(ss.devices)
+    # ss.main()  # moved to __init__ method
+    # s = input("sdfsdhkfsdlkf: ")
+    # s = "0f"
+    # print(repr(s))
+    # print(ss.verify_input("0F", 1, 5))

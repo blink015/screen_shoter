@@ -2,15 +2,16 @@ import os
 import sys
 import re
 from collections import OrderedDict
+from config import Config
 
 
 class Integrate:
     def __init__(self) -> None:
-        pass
+        self.config = Config()
 
     def integrate(self) -> None:
         """
-        integreate each py into a sigle executable file
+        integreate each .py into a sigle executable file
         :return:
         """
         script_path = "/".join(os.path.abspath(sys.argv[0]).split("/")[:-1])
@@ -18,7 +19,7 @@ class Integrate:
                         "dependency_check.py",
                         "device_getter.py",
                         "",
-                        "main.py", ]  # files to integrate (a main.py is necessary)
+                        "main.py", ]  # files to integrate (a "main.py" is necessary)
         from_locals = ["from {} import".format(x[:-3]) for x in script_files if x]  # used to exclude local imports
         output_file = "screen_shoter.py.command"
         output_path_file = "{}/{}".format(script_path, output_file)
@@ -70,12 +71,13 @@ class Integrate:
 
         # write list into file
         with open(output_path_file, 'w') as f:
-            f.writelines("#!/usr/bin/env python3\n")  # specify interpreter first
+            f.writelines("{}\n".format(self.config.interpreter_path))  # specify interpreter first
+            f.writelines("# https://github.com/blink015/screen_shoter\n")
             for k in imports.keys():
                 f.writelines(k)
             for k in from_imports.keys():
                 f.writelines(k)
-            f.writelines("\n\n")
+            f.writelines("\n")
             for line in code_lines:
                 f.writelines(line)
 

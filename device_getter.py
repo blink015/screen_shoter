@@ -1,6 +1,7 @@
 from subprocess import Popen, PIPE
 from collections import OrderedDict
 from typing import List, Dict
+from config import Config
 
 
 class DeviceGetter:
@@ -10,7 +11,7 @@ class DeviceGetter:
                                     'os': 'Android',
                                     'product_name': 'TKC-A7000',
                                     'product_type': '/',
-                                    'product_version': '10'}
+                                    'os_version': '10'}
                  ),
                  ('some_udid', {'device_name': 'xxx's iPhone',
                                 'os': 'iOS',
@@ -20,20 +21,9 @@ class DeviceGetter:
                  )])
     """
     def __init__(self):
-        # ProductType and commen name of iPhone. From internet, error may exists
-        self.product_type_name = {"iPhone3,1": "iPhone 4", "iPhone3,2": "iPhone 4", "iPhone3,3": "iPhone 4",
-                                  "iPhone4,1": "iPhone 4S", "iPhone5,1": "iPhone 5", "iPhone5,2": "iPhone 5",
-                                  "iPhone5,3": "iPhone 5c", "iPhone5,4": "iPhone 5c", "iPhone6,1": "iPhone 5s",
-                                  "iPhone6,2": "iPhone 5s", "iPhone7,1": "iPhone 6 Plus", "iPhone7,2": "iPhone 6",
-                                  "iPhone8,1": "iPhone 6s", "iPhone8,2": "iPhone 6s Plus", "iPhone8,4": "iPhone SE",
-                                  "iPhone9,1": "iPhone 7", "iPhone9,2": "iPhone 7 Plus", "iPhone9,3": "iPhone 7",
-                                  "iPhone9,4": "iPhone 7 Plus", "iPhone10,1": "iPhone 8",
-                                  "iPhone10,2": "iPhone 8 Plus", "iPhone10,3": "iPhone X",
-                                  "iPhone10,4": "iPhone 8", "iPhone10,5": "iPhone 8 Plus", "iPhone10,6": "iPhone X",
-                                  "iPhone11,2": "iPhone XS", "iPhone11,4": "iPhone XS Max",
-                                  "iPhone11,6": "iPhone XS Max", "iPhone11,8": "iPhone XR",
-                                  "iPhone12,1": "iPhone 11", "iPhone12,3": "iPhone 11 Pro",
-                                  "iPhone12,5": "iPhone 11 Pro Max", "iPhone12,8": "iPhone SE2", }
+        self.config = Config()
+        # ProductType and common name of iPhone. From internet, error may exists
+        self.product_type_name = self.config.product_type_name
         devices = OrderedDict()
         devices.update(self._get_android_devices())
         devices.update(self._get_ios_devices())
@@ -99,7 +89,7 @@ class DeviceGetter:
             android_devices[serialno]["device_name"] = "/"
             android_devices[serialno]["product_type"] = "/"
             android_devices[serialno]["product_name"] = other_infos["net.hostname"]
-            android_devices[serialno]["product_version"] = other_infos["ro.build.version.release"]
+            android_devices[serialno]["os_version"] = other_infos["ro.build.version.release"]
 
         return android_devices
 

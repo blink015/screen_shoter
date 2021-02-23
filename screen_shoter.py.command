@@ -1,23 +1,117 @@
 #!/usr/bin/env python3
+# https://github.com/blink015/screen_shoter
+import shutil
+import math
 import os
 import sys
 import time
-import shutil
+import re
 from subprocess import Popen, PIPE
 from collections import OrderedDict
 from typing import List, Dict
 from typing import List
 from pprint import pprint
+from shot_utils import ShotUtils
 
 
 class Config:
     """
     save the config infos
+    todo: add some data verifications? in case invalid be set
     """
     def __init__(self):
-        self.interface = 2  # which interface tobe used, 1 is default, 2 is simple version
+        self.interpreter_path = "#!/usr/bin/env python3"  # first line of integrated executable file
+        self.interface = 1  # which interface tobe used, 1 is default, 2 is simple version
+        self.default_save_path_android = "/sdcard/"  # temp saving path on Android for screencap/screenrecord
         self.default_save_path = "~/Desktop/"  # default saveing path
         self.default_name_base = "demo"  # default name of screenshot / screenrecord
+        self.default_suffix_img = ".png"  # screencap image format
+        self.default_suffix_video = ".mp4"  # screenrecord video format
+        self.resolution_setting = 3  # 0, 1, 2, 3, 4 represents full, 2/3, half, 1/3, 1/4 of full resolution
+                                     # float(0-1) supported, like 0.8, 0.5(namely half of full resolution), 0.3, ...
+        self.time_limit = 0  # maximum screenrecord lehgth (seconds), 0 means default 180s
+        # self.a = 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+        # self.b = 2
+        # self.c = 3
+        # self.d = 4
+        # self.e = 5
+        # self.f = 6
+        # self.g = 7
+        # self.h = 8
+        # self.i = 9
+        # self.j = 10
+        # self.k = 11
+        # self.l = 12
+        # self.m = 13
+        # self.n = 14
+        # self.o = 15
+        # self.p = 16
+        # self.q = 17
+        # ProductType and common name of iPhone. From internet, error may exists...
+        self.product_type_name = {"iPhone3,1": "iPhone 4", "iPhone3,2": "iPhone 4", "iPhone3,3": "iPhone 4",
+                                  "iPhone4,1": "iPhone 4S", "iPhone5,1": "iPhone 5", "iPhone5,2": "iPhone 5",
+                                  "iPhone5,3": "iPhone 5c", "iPhone5,4": "iPhone 5c", "iPhone6,1": "iPhone 5s",
+                                  "iPhone6,2": "iPhone 5s", "iPhone7,1": "iPhone 6 Plus", "iPhone7,2": "iPhone 6",
+                                  "iPhone8,1": "iPhone 6s", "iPhone8,2": "iPhone 6s Plus", "iPhone8,4": "iPhone SE",
+                                  "iPhone9,1": "iPhone 7", "iPhone9,2": "iPhone 7 Plus", "iPhone9,3": "iPhone 7",
+                                  "iPhone9,4": "iPhone 7 Plus", "iPhone10,1": "iPhone 8",
+                                  "iPhone10,2": "iPhone 8 Plus", "iPhone10,3": "iPhone X",
+                                  "iPhone10,4": "iPhone 8", "iPhone10,5": "iPhone 8 Plus", "iPhone10,6": "iPhone X",
+                                  "iPhone11,2": "iPhone XS", "iPhone11,4": "iPhone XS Max",
+                                  "iPhone11,6": "iPhone XS Max", "iPhone11,8": "iPhone XR",
+                                  "iPhone12,1": "iPhone 11", "iPhone12,3": "iPhone 11 Pro",
+                                  "iPhone12,5": "iPhone 11 Pro Max", "iPhone12,8": "iPhone SE2", }
+
+    def _row_occupied(self, input_str: str) -> int:
+        """
+        calculate how many rows are need to display a string,
+        according to the size of terminal.
+        """
+        terminal_width = shutil.get_terminal_size().columns
+        return math.ceil(len(input_str) / terminal_width)
+
+    def print_config(self, desc_row_num: int) -> None:
+        """
+        print all configs
+        desc_row_num: row number of header lines
+        """
+        describe = {"interface": "which interface tobe used, 1 is default, 2 is simple version",
+                # "default_save_path": "default saveing path",
+                "default_name_base": "default name of screenshot / screenrecord",
+                "resolution_setting": "set the resolution of screenrecord for Android, "
+                                      "0, 1, 2, 3, 4 represents full, 2/3, half, 1/3, 1/4 of full resolution, "
+                                      "float(0-1) supported, like 0.8, 0.5(namely half of full resolution), 0.3, ...",
+                # "a": "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
+                "": "",
+                "": "",
+                "product_type_name": "ProductType and common name of iPhone. From internet, error may exists...",}
+        d_vars = vars(self)  # all attributes and their value
+        terminal_height = shutil.get_terminal_size().lines
+
+        l_vars = list(d_vars.items())
+        indent = " >"
+        rows = desc_row_num
+        i = 0
+        while i < len(l_vars):
+            k = str(l_vars[i][0])
+            v = str(l_vars[i][1])
+            k_and_v = "{}{}: {}".format(indent, k, v)
+            if k in describe:
+                detail = "\n{} ({})".format(" "*len(indent), describe[k])
+            else:
+                detail = ""
+
+            rows += (self._row_occupied(k_and_v) + self._row_occupied(detail))
+            if rows < terminal_height:
+                print(k_and_v + detail)
+                i += 1
+            else:
+                choice = input("press enter to show more, q to continue:")
+                if choice == 'q':
+                    return None
+                os.system("clear")
+                rows = 0
+        input("press enter to continue: ")
 
 
 class DependencyCheck:
@@ -73,7 +167,7 @@ class DeviceGetter:
                                     'os': 'Android',
                                     'product_name': 'TKC-A7000',
                                     'product_type': '/',
-                                    'product_version': '10'}
+                                    'os_version': '10'}
                  ),
                  ('some_udid', {'device_name': 'xxx's iPhone',
                                 'os': 'iOS',
@@ -83,20 +177,9 @@ class DeviceGetter:
                  )])
     """
     def __init__(self):
-        # ProductType and commen name of iPhone. From internet, error may exists
-        self.product_type_name = {"iPhone3,1": "iPhone 4", "iPhone3,2": "iPhone 4", "iPhone3,3": "iPhone 4",
-                                  "iPhone4,1": "iPhone 4S", "iPhone5,1": "iPhone 5", "iPhone5,2": "iPhone 5",
-                                  "iPhone5,3": "iPhone 5c", "iPhone5,4": "iPhone 5c", "iPhone6,1": "iPhone 5s",
-                                  "iPhone6,2": "iPhone 5s", "iPhone7,1": "iPhone 6 Plus", "iPhone7,2": "iPhone 6",
-                                  "iPhone8,1": "iPhone 6s", "iPhone8,2": "iPhone 6s Plus", "iPhone8,4": "iPhone SE",
-                                  "iPhone9,1": "iPhone 7", "iPhone9,2": "iPhone 7 Plus", "iPhone9,3": "iPhone 7",
-                                  "iPhone9,4": "iPhone 7 Plus", "iPhone10,1": "iPhone 8",
-                                  "iPhone10,2": "iPhone 8 Plus", "iPhone10,3": "iPhone X",
-                                  "iPhone10,4": "iPhone 8", "iPhone10,5": "iPhone 8 Plus", "iPhone10,6": "iPhone X",
-                                  "iPhone11,2": "iPhone XS", "iPhone11,4": "iPhone XS Max",
-                                  "iPhone11,6": "iPhone XS Max", "iPhone11,8": "iPhone XR",
-                                  "iPhone12,1": "iPhone 11", "iPhone12,3": "iPhone 11 Pro",
-                                  "iPhone12,5": "iPhone 11 Pro Max", "iPhone12,8": "iPhone SE2", }
+        self.config = Config()
+        # ProductType and common name of iPhone. From internet, error may exists
+        self.product_type_name = self.config.product_type_name
         devices = OrderedDict()
         devices.update(self._get_android_devices())
         devices.update(self._get_ios_devices())
@@ -162,7 +245,7 @@ class DeviceGetter:
             android_devices[serialno]["device_name"] = "/"
             android_devices[serialno]["product_type"] = "/"
             android_devices[serialno]["product_name"] = other_infos["net.hostname"]
-            android_devices[serialno]["product_version"] = other_infos["ro.build.version.release"]
+            android_devices[serialno]["os_version"] = other_infos["ro.build.version.release"]
 
         return android_devices
 
@@ -226,29 +309,32 @@ class DeviceGetter:
 
         return ios_devices
 
-# static方法，定义Android截图类，iOS截图类，还是都放到main.py里？
-
-# 其他类先固定方法，加不加_，固定后好引用
-# 该加static的加一下，比如Android截图/截屏类，方便引用
 
 class ScreenShoter:
+    """
+    main class
+    todo, lots of error handler to add...
+    todo, future? get device crash log???
+    """
     def __init__(self):
         self.config = Config()
         self.dependency_check = DependencyCheck()
+        self.devices = DeviceGetter().devices
+        self.shot_utils = ShotUtils()
+
+        self.default_save_path = self.config.default_save_path
+        self.default_name_base = self.config.default_name_base
+        self.device_id = ""  # specified device's serialno / udid
 
         # initial interface
         self.pre_interface()
         if self.config.interface == 1:
-            self.interface()
+            self.initial_interface()
         else:
-            self.interface_simple()
+            self.initial_interface_simple()
 
-        self.devices = DeviceGetter().devices
-
-        self.device_id = ""  # 记录当前选中的设备serialno/udid
-
-        self.default_save_path = self.config.default_save_path  # 默认保存到的路径
-        self.default_name_base = self.config.default_name_base  # 默认的基本名
+        # main
+        self.main()
 
     def pre_interface(self) -> None:
         """
@@ -262,7 +348,28 @@ class ScreenShoter:
             time.sleep(time_a)
         time.sleep(0.4 - time_a)
 
-    def interface(self) -> None:
+    def split_msg(self, strr: str, terminal_width: int) -> List:
+        """
+        according to terminal's column num, split long str to shorter ones
+        just in case...
+        :param strr:
+        :param terminal_width:
+        :return:
+        """
+        res = []
+        i = 0
+        while True:
+            slice_lower = i * (terminal_width - 2)
+            slice_uppper = (i + 1) * (terminal_width - 2)
+            temp = strr[slice_lower:slice_uppper]
+            if temp:
+                res.append(temp)
+            else:
+                break
+            i += 1
+        return res
+
+    def initial_interface(self) -> None:
         """
         create initial interface (in terminal...)
         :return:
@@ -299,28 +406,7 @@ class ScreenShoter:
             print(first_interface[i])
         input(" press enter to start: ")
 
-    def split_msg(self, strr: str, terminal_width: int) -> List:
-        """
-        according to the terminal column num, split long str to shorter ones
-        just in case...
-        :param strr:
-        :param terminal_width:
-        :return:
-        """
-        res = []
-        i = 0
-        while True:
-            slice_lower = i * (terminal_width - 2)
-            slice_uppper = (i + 1) * (terminal_width - 2)
-            temp = strr[slice_lower:slice_uppper]
-            if temp:
-                res.append(temp)
-            else:
-                break
-            i += 1
-        return res
-
-    def interface_simple(self) -> None:
+    def initial_interface_simple(self) -> None:
         """
         in case of odd UI...
         :return:
@@ -328,17 +414,208 @@ class ScreenShoter:
         print("\n" + self.dependency_check.msg)
         input("press enter to start: ")
 
-    def main(self):
-        # 初始化
+    def device_select_interface_abandon(self) -> str or None:
+        """
+        this method is abandoned
+        no device UI / select device UI
+        specify device by set the instance variable
+        """
+        os.system("clear")
+        if self.devices:
+            if len(self.devices) == 1:  # distinguish number of devices in main method, don't call this method if number is 1
+                pass
+                return None
+            else:
+                print("please select your target device:")
+                counter = 1
+                for k, v in self.devices.items():
+                    if v["os"] == "Android" or v["os"] == "iOS":  # in case of display infos separately
+                        print("{}. name: {}\tos: {}\tos_version: {}".
+                              format(counter, v["product_name"].ljust(21, " "),
+                                     v["os"].ljust(9, " "), v["os_version"]))
+                    else:
+                        raise Exception("no 'os' attribute found within devices's dict.")
+                    counter += 1
+                number = input("type number({}-{}) here to select: ".format(1, len(self.devices)))
+                return number
+        else:
+            print("no device/simulator found...")
+            res = input("press enter to retry: ")
+            return res
 
-        # 正式开始循环？
+    def device_select_interface(self):
+        """
+        no device UI / select device UI
+        specify device by set the instance variable
+        """
+        print("please select your target device:")
+        counter = 1
+        for k, v in self.devices.items():
+            if v["os"] == "Android" or v["os"] == "iOS":  # in case of display infos separately
+                print("{}. name: {}\tos: {}\tos_version: {}".
+                      format(counter, v["product_name"].ljust(21, " "),
+                             v["os"].ljust(9, " "), v["os_version"]))
+            else:
+                raise Exception("no 'os' attribute found within devices's dict.")
+            counter += 1
 
-        counter = 0  # 是
+    def verify_input(self, input_str: str, lower_limit: int, upper_limit: int) -> bool:
+        """
+        varify if the input string is int like
+        """
+        try:
+            if re.match(r"[0-9]+", input_str):  # is number
+                if lower_limit <= int(input_str) <= upper_limit:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        except Exception as e:  # in case some werid input likt "0f" sometimes...
+            return False
+
+    def device_select_abandon(self) -> None:
+        """
+        this method ia abandoned
+        choose one device, saved to instance variable
+        todo: distinguish the "None" that no device, and the "None" that only one device???
+        """
+        counter = 1
+        while True:
+            input_str = self.device_select_interface_abandon()
+            # print("[][][][][][][][]:" + repr(input_str))  ####
+            if input_str == "":
+                # print("##################")  ####
+                self.devices = DeviceGetter().devices
+            elif input_str is not None:  # multi devices
+                input_ok = self.verify_input(input_str, 1, len(self.devices))
+                if input_ok:
+                    self.device_id = list(self.devices.keys())[int(input_str) - 1]
+                    break
+                else:
+                    pass
+            else:
+                pass
+            counter += 1
+
+    def device_select(self) -> None:
+        """
+        choose one device, saved to instance variable
+        todo: distinguish the "None" that no device, and the "None" that only one device???
+        """
+        counter = 1
+        input_desc = "type number({}-{}) to select, type enter to reload devices: \n".format(1, len(self.devices))
+        while True:
+            os.system("clear")
+            if self.devices:
+                if len(self.devices) == 1:
+                    self.device_id = list(self.devices.keys())[0]
+                    break
+                else:
+                    # os.system("clear")
+                    self.device_select_interface()
+                    number_str = input(input_desc)
+                    if self.verify_input(number_str, 1, len(self.devices)):
+                        self.device_id = list(self.devices.keys())[int(number_str) - 1]
+                        break
+                    elif number_str == "":
+                        print("reloading devices..."); time.sleep(0.7)
+                        self.devices = DeviceGetter().devices
+                    else:
+                        print("a valid number is need{}".format("."*counter)); time.sleep(1)
+            else:
+                print("no device/simulator found...")
+                input("press enter to retry: ")
+                print("reloading devices..."); time.sleep(0.7)
+                self.devices = DeviceGetter().devices
+
+            counter += 1
+
+    def choose_command(self) -> int:
+        """
+        main UI, choose one option to do something
+        """
+        cur_device_dict = self.devices[self.device_id]
+        os.system("clear")  # clear screen
+        print("current deivce: {}\t{}\t{}".format(cur_device_dict["product_name"],
+                                                  cur_device_dict["os"], cur_device_dict["os_version"], ))
+        print("choose your option below: ")
+        print("1. to take screencap;")
+        print("2. to take screenrecord (Android only!);")
+        print("9. to change target device/simulator;")
+        print("0. to display current config;")
 
         while True:
-            # 如果counter=0，进初始界面
+            num = input("your choice: ")
+            try:
+                num = int(num)
+                if num in [1, 2, 9, 0]:
+                    break
+                else:
+                    raise Exception
+            except Exception as e:
+                print("please try again...")
+        return num
 
-            # 中间可重置为0，循环后，再次触发初始界面（但肯定不一样，第一次初始界面消不掉python版本等信息……
+    def rename_file(self):
+        """
+        call the rename_file method of ShotUtils
+        """
+        msg = "print enter to continue, type a new name to rename file: "
+        new_name = input(msg)
+        if new_name:
+            while True:
+                if new_name and self.shot_utils.rename_file(new_name):
+                    break
+                else:
+                    print("please try to type an valid file name...")
+                    new_name = input(msg)
+
+    def main(self):
+        """
+        todo: include all code block of main method within try...except...?
+              on error start next round?
+        todo: "press "q" to quit any where", add one input like method
+                  q then sys.exit(); add a bit describe, sleep before quit?
+        """
+        if len(self.devices) == 0:
+            self.device_select()
+        elif len(self.devices) == 1:
+            self.device_id = list(self.devices.keys())[0]
+        else:
+            self.device_select()
+
+        counter = 0
+        while True:
+            cmd_serial = self.choose_command()
+
+            if cmd_serial == 1:  # take screencap
+                if self.shot_utils.screencap(self.devices[self.device_id]["os"], self.device_id):
+                    self.rename_file()
+                else:
+                    pass  # todo: error handle
+            elif cmd_serial == 2:  # take screenrecord
+                if self.shot_utils.screenrecord(self.devices[self.device_id]["os"], self.device_id):
+                    self.rename_file()
+                else:
+                    pass  # todo: error handle
+            elif cmd_serial == 9:  # change target deivce
+                self.devices = DeviceGetter().devices
+                if len(self.devices) == 1:
+                    print("only one device detected...")
+                    input("press enter to continue:")
+                self.device_select()
+            elif cmd_serial == 0:  # show all configs
+                os.system("clear")
+                header_lines = ["all configs displayed below, ",
+                                "you can change them manually within source code: ",
+                                "class Config, method __init__ ...",
+                                " -------------------------------------------", ]  # in order to calculate rows occupied
+                print("\n".join(header_lines))
+                # self.config.print_config(4)  # why using specific value???
+                self.config.print_config(len(header_lines))
+            else:
+                raise Exception("unexpected cmd_serial occuried...")
 
             counter += 1
 
@@ -347,6 +624,9 @@ if __name__ == "__main__":
     ss = ScreenShoter()
     # print(ss.dependency_check.dependency_check)
     # print(ss.dependency_check.msg)
-    # print(ss.devices)
-    # ss.main()
-    # ss.interface()
+    # pprint(ss.devices)
+    # ss.main()  # moved to __init__ method
+    # s = input("sdfsdhkfsdlkf: ")
+    # s = "0f"
+    # print(repr(s))
+    # print(ss.verify_input("0F", 1, 5))
