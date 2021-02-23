@@ -263,14 +263,15 @@ class ScreenShoter:
         call the rename_file method of ShotUtils
         """
         msg = "print enter to continue, type a new name to rename file: "
-        new_name = input(msg)
-        if new_name:
-            while True:
-                if new_name and self.shot_utils.rename_file(new_name):
+        while True:
+            new_name = input(msg)
+            if not new_name:
+                break
+            else:
+                if self.shot_utils.rename_file(new_name):
                     break
                 else:
                     print("please try to type an valid file name...")
-                    new_name = input(msg)
 
     def main(self):
         """

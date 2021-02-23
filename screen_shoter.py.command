@@ -334,11 +334,18 @@ class ShotUtils():
         print("taking screencap...")
         try:
             if os == "Android":
-                self._screencap_Android(id)
+                if self._screencap_Android(id):
+                    return True
+                else:
+                    input("press enter to continue...")  # is it appropriate???
+                    return False
             elif os == "iOS":
-                self._screencap_iOS(id)
+                if self._screencap_iOS(id):
+                    return True
+                else:
+                    input("press enter to continue...")  # is it appropriate???
+                    return False
             # input("press enter to continue...")  # is it appropriate???
-            return True
         except Exception as e:
             traceback.print_exc()
             print("sorry, screencap failed for some reason, please try again...")
@@ -394,11 +401,14 @@ class ShotUtils():
         try:
             if os == "Android":
                 print("taking screenrecord...")
-                self._screenrecord_Android(id, self._get_resolution(id), self.time_limit)
+                if self._screenrecord_Android(id, self._get_resolution(id), self.time_limit):
+                    return True
+                else:
+                    input("press enter to continue...")
+                    return False
             else:
                 self._screenrecord_iOS(id)
                 return False  # not support currently...
-            return True
         except Exception as e:
             traceback.print_exc()
             print("sorry, screenrecord failed for some reason, please try again...")
@@ -411,6 +421,9 @@ class ShotUtils():
         currently the resolution and time_limit can be adjust (attribute of class Config).
         todo: add more parameters if necessary...
         """
+        if not resolution:  # fail to get resolution
+            return False
+
         if int(time_limit) !=0:
             print("resolution:{}; max length:{}s".format(resolution, time_limit))
             print("PRESS Ctrl+C to STOP recording:")
@@ -535,37 +548,43 @@ class ShotUtils():
             input("press enter to continue...")
             return True
 
-    def _get_resolution(self, serialno: str) -> str:
+    def _get_resolution(self, serialno: str) -> str or bool:
         """
         calculate resolution which used for screenrecord, e.g. 540x1170
         """
-        res = os.popen("adb -s {} shell dumpsys window displays | grep init"
-                       .format(serialno)).read()
-        # e.g. "   init=1080x2340 440dpi cur=1080x2340 app=1080x2120 rng=1080x990-2250x2120"
-        temp = res.strip().split(" ")[0]  # e.g. "init=1080x1920"
-        resol_default = temp[5:len(temp)].split("x")  # e.g. ['1080', '2340']
-        resol_default = [int(x) for x in resol_default]
+        cmd = ["adb", "-s", serialno, "shell", "dumpsys", "window", "displays", "|", "grep", "init"]
+        pp = Popen(cmd, stdout=PIPE, stderr=PIPE)  # os.popen can not get error message
+        res = pp.communicate()  # expected output in res[0], while error message in res[1] if exists
 
-        setting = self.resolution_setting
-        if setting == 0:
-            return "x".join([str(x) for x in resol_default])
-        elif setting == 1:
-            resol_two_third = [int(x * 2 / 3) for x in resol_default]
-            return "x".join([str(x) for x in resol_two_third])
-        elif setting == 2:
-            resol_half = [int(x * 1 / 2) for x in resol_default]
-            return "x".join([str(x) for x in resol_half])
-        elif setting == 3:
-            resol_one_third = [int(x * 1 / 3) for x in resol_default]
-            return "x".join([str(x) for x in resol_one_third])
-        elif setting == 4:
-            resol_quarter = [int(x * 1 / 4) for x in resol_default]
-            return "x".join([str(x) for x in resol_quarter])
-        elif setting > 0 and setting < 1:
-            resol_custom = [int(x * setting) for x in resol_default]
-            return "x".join([str(x) for x in resol_custom])
-        else:  # in case invalid setting
-            return "x".join([str(x) for x in resol_default])
+        if res[1]:
+            print("screencap failed...")
+            print("[adb]{}".format(res[1].decode("utf-8").strip("\n ")))
+            return False
+        else:
+            temp = res[0].decode("utf-8").strip("\n ").split(" ")[0]  # e.g. "init=1080x1920"
+            resol_default = temp[5:len(temp)].split("x")  # e.g. ['1080', '2340']
+            resol_default = [int(x) for x in resol_default]
+
+            setting = self.resolution_setting
+            if setting == 0:
+                return "x".join([str(x) for x in resol_default])
+            elif setting == 1:
+                resol_two_third = [int(x * 2 / 3) for x in resol_default]
+                return "x".join([str(x) for x in resol_two_third])
+            elif setting == 2:
+                resol_half = [int(x * 1 / 2) for x in resol_default]
+                return "x".join([str(x) for x in resol_half])
+            elif setting == 3:
+                resol_one_third = [int(x * 1 / 3) for x in resol_default]
+                return "x".join([str(x) for x in resol_one_third])
+            elif setting == 4:
+                resol_quarter = [int(x * 1 / 4) for x in resol_default]
+                return "x".join([str(x) for x in resol_quarter])
+            elif setting > 0 and setting < 1:
+                resol_custom = [int(x * setting) for x in resol_default]
+                return "x".join([str(x) for x in resol_custom])
+            else:  # in case invalid setting
+                return "x".join([str(x) for x in resol_default])
 
 
 class ScreenShoter:
@@ -820,14 +839,15 @@ class ScreenShoter:
         call the rename_file method of ShotUtils
         """
         msg = "print enter to continue, type a new name to rename file: "
-        new_name = input(msg)
-        if new_name:
-            while True:
-                if new_name and self.shot_utils.rename_file(new_name):
+        while True:
+            new_name = input(msg)
+            if not new_name:
+                break
+            else:
+                if self.shot_utils.rename_file(new_name):
                     break
                 else:
                     print("please try to type an valid file name...")
-                    new_name = input(msg)
 
     def main(self):
         """
