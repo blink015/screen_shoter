@@ -18,6 +18,7 @@ class Integrate:
         script_files = ["config.py",
                         "dependency_check.py",
                         "device_getter.py",
+                        "shot_utils.py",
                         "",
                         "main.py", ]  # files to integrate (a "main.py" is necessary)
         from_locals = ["from {} import".format(x[:-3]) for x in script_files if x]  # used to exclude local imports
