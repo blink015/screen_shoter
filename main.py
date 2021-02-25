@@ -153,8 +153,7 @@ class ScreenShoter:
         counter = 1
         for k, v in self.devices.items():
             if v["os"] == "Android" or v["os"] == "iOS":  # in case of display infos separately
-                print("{}. name: {}\tos: {}\tos_version: {}".
-                      format(counter, v["product_name"].ljust(21, " "),
+                print("{}. name: {}\tos: {}\tos_version: {}".format(counter, v["product_name"].ljust(21, " "),
                              v["os"].ljust(9, " "), v["os_version"]))
             else:
                 raise Exception("no 'os' attribute found within devices's dict.")
@@ -238,7 +237,7 @@ class ScreenShoter:
         """
         cur_device_dict = self.devices[self.device_id]
         os.system("clear")  # clear screen
-        print("current deivce: {}\t{}\t{}".format(cur_device_dict["product_name"],
+        print("current deivce: {}   {} {}".format(cur_device_dict["product_name"],
                                                   cur_device_dict["os"], cur_device_dict["os_version"], ))
         print("choose your option below: ")
         print("1. to take screencap;")
@@ -277,9 +276,12 @@ class ScreenShoter:
         """
         todo: include all code block of main method within try...except...?
               on error start next round?
-        todo: "press "q" to quit any where", add one input like method
+        todoX: "press "q" to quit any where", add one input like method
                   q then sys.exit(); add a bit describe, sleep before quit?
-        todo: README.md
+                  NO need, must set shell preference in order to close window after "exit"
+        todo: refine the code: function's docstring, class's docstring, class's Config...
+        todo?: self.print(from, indent), from adb/py/..., indent is int
+        todo: remove abandoned methods in some time
         """
         if len(self.devices) == 0:
             self.device_select()
@@ -325,11 +327,4 @@ class ScreenShoter:
 
 if __name__ == "__main__":
     ss = ScreenShoter()
-    # print(ss.dependency_check.dependency_check)
-    # print(ss.dependency_check.msg)
-    # pprint(ss.devices)
     # ss.main()  # moved to __init__ method
-    # s = input("sdfsdhkfsdlkf: ")
-    # s = "0f"
-    # print(repr(s))
-    # print(ss.verify_input("0F", 1, 5))

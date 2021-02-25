@@ -162,9 +162,9 @@ class ShotUtils():
 
     def _screenrecord_iOS(self, udid: str) -> None:
         """
-        ideviceinstaller do NOT support take screenrecord of iOS...
+        libimobiledevice do NOT support take screenrecord of iOS...
         """
-        print("screenrecord for iOS is NOT SUPPORT by ideviceinstaller...")
+        print("screenrecord for iOS is NOT SUPPORT by libimobiledevice...")
         input("press enter to continue...")
 
     def _pull_from_android(self, serialno: str, name_safe: str, shot_type: str) -> bool:

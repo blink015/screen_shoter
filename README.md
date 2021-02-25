@@ -23,33 +23,35 @@ Download this file, or simply copy the code to a text file.
 
 ## Usage
 
-Add executable permissions to the file:  
+First Add executable permissions to the file:  
 ```
 chmod +x [path]
 ```
 
-Make sure device(s) connected to computer (via usb). If the device is connected for the first time, allow debuging (Android) or trust computer (iOS).  
+Then Make sure device(s) connected to computer (via usb). If the device is connected for the first time, allow debuging (Android) or trust computer (iOS).  
 
-Double click **screen_shoter.py.command**, script will start to run in terminal, then follow the guide to use.
+Now Double click **screen_shoter.py.command**, script will start to run in terminal, then follow the guide to use.
+
+Besides, you can scroll down to find history messages, they were not really earsed.
 
 ### Config
 
-Options were stored in instance variables of class Config. You can modify them manually. Open **screen_shoter.py.command** in a text editor, class Config lies at the beginning. Within the __init__ method, all configs and their descriptions listed.
+Options were stored in instance variables of class *Config*. You can modify them manually. Open **screen_shoter.py.command** in a text editor, class *Config* lies at the beginning. All options and their description listed within the *\_\_init\_\_* method.
 
-Some options:
-* **self.interpreter_path**:   set the python interpreter.
-* **self.default_save_path**:  where to save screenshot.
-* **self.resolution_setting**: set the resolution of screenrecord (for Android).
-* **self.time_limit**:         set the max length of screenrecord (for Android).
-* **self.interface**:          skip initial_interface if set to 2.
-* **self.product_type_name**:  the common name corresponding to the product_type of iPhone. May not up to date...
+| Some Options               | Description                                         |
+| -------------------------- | --------------------------------------------------- |
+| `self.interpreter_path`    | set the python interpreter                          |
+| `self.default_save_path`   | where to save screenshot                            |
+| `self.resolution_setting`  | set the resolution of screenrecord (for Android)    |
+| `self.time_limit`          | set the max length of screenrecord (for Android)    |
+| `self.interface`           | skip initial_interface if set to 2                  |
+| `self.product_type_name`   | Interact with the debugserver service of a device   |
 
 ## Note
 
 Screenrecord is not supported for iOS devices.
 
-Some Android device may not support taking screenrecord using adb command... You may run this command in terminal to verify:
+A few Android devices may not support taking screenrecord using adb command... You could run this command in terminal to verify (Press Control + C to stop recording):
 ```
 adb shell screenrecord /sdcard/demo.mp4
 ```
-Press Control + C to stop recording.

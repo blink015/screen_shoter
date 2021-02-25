@@ -20,9 +20,7 @@ class Config:
     todo: add some data verifications? in case invalid be set
     """
     def __init__(self):
-        self.interpreter_path = "#!/usr/bin/env python3"  # first line of integrated executable file
-        self.interface = 1  # which interface tobe used, 1 is default, 2 is simple version
-        self.default_save_path_android = "/sdcard/"  # temp saving path on Android for screencap/screenrecord
+        self.interpreter_path = "#!/usr/bin/env python3"  # first line, set python interpreter
         self.default_save_path = "~/Desktop/"  # default saveing path
         self.default_name_base = "demo"  # default name of screenshot / screenrecord
         self.default_suffix_img = ".png"  # screencap image format
@@ -30,24 +28,9 @@ class Config:
         self.resolution_setting = 3  # 0, 1, 2, 3, 4 represents full, 2/3, half, 1/3, 1/4 of full resolution
                                      # float(0-1) supported, like 0.8, 0.5(namely half of full resolution), 0.3, ...
         self.time_limit = 0  # maximum screenrecord lehgth (seconds), 0 means default 180s
-        # self.a = 12345678901234567890123456789012345678901234567890123456789012345678901234567890
-        # self.b = 2
-        # self.c = 3
-        # self.d = 4
-        # self.e = 5
-        # self.f = 6
-        # self.g = 7
-        # self.h = 8
-        # self.i = 9
-        # self.j = 10
-        # self.k = 11
-        # self.l = 12
-        # self.m = 13
-        # self.n = 14
-        # self.o = 15
-        # self.p = 16
-        # self.q = 17
         # ProductType and common name of iPhone. From internet, error may exists...
+        self.default_save_path_android = "/sdcard/"  # temp saving path on Android for screencap/screenrecord
+        self.interface = 1  # which interface tobe used, 1 is default, 2 is simple version
         self.product_type_name = {"iPhone3,1": "iPhone 4", "iPhone3,2": "iPhone 4", "iPhone3,3": "iPhone 4",
                                   "iPhone4,1": "iPhone 4S", "iPhone5,1": "iPhone 5", "iPhone5,2": "iPhone 5",
                                   "iPhone5,3": "iPhone 5c", "iPhone5,4": "iPhone 5c", "iPhone6,1": "iPhone 5s",
@@ -76,13 +59,12 @@ class Config:
         desc_row_num: row number of header lines
         """
         describe = {"interface": "which interface tobe used, 1 is default, 2 is simple version",
-                # "default_save_path": "default saveing path",
-                "default_name_base": "default name of screenshot / screenrecord",
+                "default_save_path": "where to save screenshot",
+                "default_name_base": "default name of screenshot",
                 "resolution_setting": "set the resolution of screenrecord for Android, "
                                       "0, 1, 2, 3, 4 represents full, 2/3, half, 1/3, 1/4 of full resolution, "
                                       "float(0-1) supported, like 0.8, 0.5(namely half of full resolution), 0.3, ...",
-                # "a": "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
-                "": "",
+                "time_limit": "max length of screenrecord",
                 "": "",
                 "product_type_name": "ProductType and common name of iPhone. From internet, error may exists...",}
         d_vars = vars(self)  # all attributes and their value
@@ -95,7 +77,7 @@ class Config:
         while i < len(l_vars):
             k = str(l_vars[i][0])
             v = str(l_vars[i][1])
-            k_and_v = "{}{}: {}".format(indent, k, v)
+            k_and_v = "{}{}:\t{}".format(indent, k, v)
             if k in describe:
                 detail = "\n{} ({})".format(" "*len(indent), describe[k])
             else:
@@ -106,7 +88,7 @@ class Config:
                 print(k_and_v + detail)
                 i += 1
             else:
-                choice = input("press enter to show more, q to continue:")
+                choice = input("press enter to show more, q to go back:")
                 if choice == 'q':
                     return None
                 os.system("clear")
@@ -162,7 +144,7 @@ class DependencyCheck:
 
 class DeviceGetter:
     """
-    get devices and their info through adb / ideviceinstaller, save to OrderedDict like:
+    get devices and their info through adb / libimobiledevice, save to OrderedDict like:
     OrderedDict([('some_serialno', {'device_name': '/',
                                     'os': 'Android',
                                     'product_name': 'TKC-A7000',
@@ -266,7 +248,7 @@ class DeviceGetter:
         :param udid:
         :return:
         """
-        cmd = ["ideviceinfo", "-u", "{}".format(udid)]  # no blank in command to be Popen; depend libideviceinstaller
+        cmd = ["ideviceinfo", "-u", "{}".format(udid)]  # no blank in command to be Popen; depend libimobiledevice
         res = self._get_Popen_res(cmd)
         res = res.split("\n")
 
@@ -289,7 +271,7 @@ class DeviceGetter:
         get iOS devices list and their infos
         :return:
         """
-        cmd = ["idevice_id"]  # command of libideviceinstaller
+        cmd = ["idevice_id"]  # command of libimobiledevice
         res = self._get_Popen_res(cmd)
         res = res.split("\n")
 
@@ -467,9 +449,9 @@ class ShotUtils():
 
     def _screenrecord_iOS(self, udid: str) -> None:
         """
-        ideviceinstaller do NOT support take screenrecord of iOS...
+        libimobiledevice do NOT support take screenrecord of iOS...
         """
-        print("screenrecord for iOS is NOT SUPPORT by ideviceinstaller...")
+        print("screenrecord for iOS is NOT SUPPORT by libimobiledevice...")
         input("press enter to continue...")
 
     def _pull_from_android(self, serialno: str, name_safe: str, shot_type: str) -> bool:
@@ -729,8 +711,7 @@ class ScreenShoter:
         counter = 1
         for k, v in self.devices.items():
             if v["os"] == "Android" or v["os"] == "iOS":  # in case of display infos separately
-                print("{}. name: {}\tos: {}\tos_version: {}".
-                      format(counter, v["product_name"].ljust(21, " "),
+                print("{}. name: {}\tos: {}\tos_version: {}".format(counter, v["product_name"].ljust(21, " "),
                              v["os"].ljust(9, " "), v["os_version"]))
             else:
                 raise Exception("no 'os' attribute found within devices's dict.")
@@ -814,7 +795,7 @@ class ScreenShoter:
         """
         cur_device_dict = self.devices[self.device_id]
         os.system("clear")  # clear screen
-        print("current deivce: {}\t{}\t{}".format(cur_device_dict["product_name"],
+        print("current deivce: {}   {} {}".format(cur_device_dict["product_name"],
                                                   cur_device_dict["os"], cur_device_dict["os_version"], ))
         print("choose your option below: ")
         print("1. to take screencap;")
@@ -853,9 +834,12 @@ class ScreenShoter:
         """
         todo: include all code block of main method within try...except...?
               on error start next round?
-        todo: "press "q" to quit any where", add one input like method
+        todoX: "press "q" to quit any where", add one input like method
                   q then sys.exit(); add a bit describe, sleep before quit?
-        todo: README.md
+                  NO need, must set shell preference in order to close window after "exit"
+        todo: refine the code: function's docstring, class's docstring, class's Config...
+        todo?: self.print(from, indent), from adb/py/..., indent is int
+        todo: remove abandoned methods in some time
         """
         if len(self.devices) == 0:
             self.device_select()
@@ -901,11 +885,4 @@ class ScreenShoter:
 
 if __name__ == "__main__":
     ss = ScreenShoter()
-    # print(ss.dependency_check.dependency_check)
-    # print(ss.dependency_check.msg)
-    # pprint(ss.devices)
     # ss.main()  # moved to __init__ method
-    # s = input("sdfsdhkfsdlkf: ")
-    # s = "0f"
-    # print(repr(s))
-    # print(ss.verify_input("0F", 1, 5))

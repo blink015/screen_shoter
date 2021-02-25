@@ -6,7 +6,7 @@ from config import Config
 
 class DeviceGetter:
     """
-    get devices and their info through adb / ideviceinstaller, save to OrderedDict like:
+    get devices and their info through adb / libimobiledevice, save to OrderedDict like:
     OrderedDict([('some_serialno', {'device_name': '/',
                                     'os': 'Android',
                                     'product_name': 'TKC-A7000',
@@ -110,7 +110,7 @@ class DeviceGetter:
         :param udid:
         :return:
         """
-        cmd = ["ideviceinfo", "-u", "{}".format(udid)]  # no blank in command to be Popen; depend libideviceinstaller
+        cmd = ["ideviceinfo", "-u", "{}".format(udid)]  # no blank in command to be Popen; depend libimobiledevice
         res = self._get_Popen_res(cmd)
         res = res.split("\n")
 
@@ -133,7 +133,7 @@ class DeviceGetter:
         get iOS devices list and their infos
         :return:
         """
-        cmd = ["idevice_id"]  # command of libideviceinstaller
+        cmd = ["idevice_id"]  # command of libimobiledevice
         res = self._get_Popen_res(cmd)
         res = res.split("\n")
 

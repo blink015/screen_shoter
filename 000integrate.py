@@ -20,7 +20,7 @@ class Integrate:
                         "device_getter.py",
                         "shot_utils.py",
                         "",
-                        "main.py", ]  # files to integrate (a "main.py" is necessary)
+                        "main.py", ]  # files to integrate one by one (a "main.py" at last is necessary)
         from_locals = ["from {} import".format(x[:-3]) for x in script_files if x]  # used to exclude local imports
         output_file = "screen_shoter.py.command"
         output_path_file = "{}/{}".format(script_path, output_file)

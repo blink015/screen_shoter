@@ -8,9 +8,7 @@ class Config:
     todo: add some data verifications? in case invalid be set
     """
     def __init__(self):
-        self.interpreter_path = "#!/usr/bin/env python3"  # first line of integrated executable file
-        self.interface = 1  # which interface tobe used, 1 is default, 2 is simple version
-        self.default_save_path_android = "/sdcard/"  # temp saving path on Android for screencap/screenrecord
+        self.interpreter_path = "#!/usr/bin/env python3"  # first line, set python interpreter
         self.default_save_path = "~/Desktop/"  # default saveing path
         self.default_name_base = "demo"  # default name of screenshot / screenrecord
         self.default_suffix_img = ".png"  # screencap image format
@@ -18,24 +16,9 @@ class Config:
         self.resolution_setting = 3  # 0, 1, 2, 3, 4 represents full, 2/3, half, 1/3, 1/4 of full resolution
                                      # float(0-1) supported, like 0.8, 0.5(namely half of full resolution), 0.3, ...
         self.time_limit = 0  # maximum screenrecord lehgth (seconds), 0 means default 180s
-        # self.a = 12345678901234567890123456789012345678901234567890123456789012345678901234567890
-        # self.b = 2
-        # self.c = 3
-        # self.d = 4
-        # self.e = 5
-        # self.f = 6
-        # self.g = 7
-        # self.h = 8
-        # self.i = 9
-        # self.j = 10
-        # self.k = 11
-        # self.l = 12
-        # self.m = 13
-        # self.n = 14
-        # self.o = 15
-        # self.p = 16
-        # self.q = 17
         # ProductType and common name of iPhone. From internet, error may exists...
+        self.default_save_path_android = "/sdcard/"  # temp saving path on Android for screencap/screenrecord
+        self.interface = 1  # which interface tobe used, 1 is default, 2 is simple version
         self.product_type_name = {"iPhone3,1": "iPhone 4", "iPhone3,2": "iPhone 4", "iPhone3,3": "iPhone 4",
                                   "iPhone4,1": "iPhone 4S", "iPhone5,1": "iPhone 5", "iPhone5,2": "iPhone 5",
                                   "iPhone5,3": "iPhone 5c", "iPhone5,4": "iPhone 5c", "iPhone6,1": "iPhone 5s",
@@ -64,13 +47,12 @@ class Config:
         desc_row_num: row number of header lines
         """
         describe = {"interface": "which interface tobe used, 1 is default, 2 is simple version",
-                # "default_save_path": "default saveing path",
-                "default_name_base": "default name of screenshot / screenrecord",
+                "default_save_path": "where to save screenshot",
+                "default_name_base": "default name of screenshot",
                 "resolution_setting": "set the resolution of screenrecord for Android, "
                                       "0, 1, 2, 3, 4 represents full, 2/3, half, 1/3, 1/4 of full resolution, "
                                       "float(0-1) supported, like 0.8, 0.5(namely half of full resolution), 0.3, ...",
-                # "a": "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
-                "": "",
+                "time_limit": "max length of screenrecord",
                 "": "",
                 "product_type_name": "ProductType and common name of iPhone. From internet, error may exists...",}
         d_vars = vars(self)  # all attributes and their value
@@ -83,7 +65,7 @@ class Config:
         while i < len(l_vars):
             k = str(l_vars[i][0])
             v = str(l_vars[i][1])
-            k_and_v = "{}{}: {}".format(indent, k, v)
+            k_and_v = "{}{}:\t{}".format(indent, k, v)
             if k in describe:
                 detail = "\n{} ({})".format(" "*len(indent), describe[k])
             else:
@@ -94,7 +76,7 @@ class Config:
                 print(k_and_v + detail)
                 i += 1
             else:
-                choice = input("press enter to show more, q to continue:")
+                choice = input("press enter to show more, q to go back:")
                 if choice == 'q':
                     return None
                 os.system("clear")
