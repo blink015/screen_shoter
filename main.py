@@ -13,11 +13,11 @@ from config import Config
 
 class ScreenShoter:
     """
-    main class
+    main class.
     todo, lots of error handler to add...
-    todo, future? get device crash log???
+    todo, get device's crash log?
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.config = Config()
         self.dependency_check = DependencyCheck()
         self.devices = DeviceGetter().devices
@@ -40,6 +40,7 @@ class ScreenShoter:
     def pre_interface(self) -> None:
         """
         print some "log", just for fun...
+
         :return:
         """
         time_a = 0.06
@@ -51,10 +52,10 @@ class ScreenShoter:
 
     def split_msg(self, strr: str, terminal_width: int) -> List:
         """
-        according to terminal's column num, split long str to shorter ones
-        just in case...
-        :param strr:
-        :param terminal_width:
+        according to terminal's column num, split long str to shorter ones. just in case...
+
+        :param strr: string to split
+        :param terminal_width: terminal width in characters
         :return:
         """
         res = []
@@ -72,7 +73,8 @@ class ScreenShoter:
 
     def initial_interface(self) -> None:
         """
-        create initial interface (in terminal...)
+        create initial interface in terminal...
+
         :return:
         """
         terminal_height = shutil.get_terminal_size().lines  # os.get_...() will get and error...
@@ -109,7 +111,8 @@ class ScreenShoter:
 
     def initial_interface_simple(self) -> None:
         """
-        in case of odd UI...
+        in case of odd UI appears...
+
         :return:
         """
         print("\n" + self.dependency_check.msg)
@@ -144,10 +147,11 @@ class ScreenShoter:
             res = input("press enter to retry: ")
             return res
 
-    def device_select_interface(self):
+    def device_select_interface(self) -> None:
         """
-        no device UI / select device UI
-        specify device by set the instance variable
+        no device UI / select device UI. specify device by set the instance variable.
+
+        :return:
         """
         print("please select your target device:")
         counter = 1
@@ -161,7 +165,12 @@ class ScreenShoter:
 
     def verify_input(self, input_str: str, lower_limit: int, upper_limit: int) -> bool:
         """
-        varify if the input string is int like
+        varify if the input string is int like.
+
+        :param input_str: string to be verify
+        :param lower_limit: int range start
+        :param upper_limit: int range end
+        :return:
         """
         try:
             if re.match(r"[0-9]+", input_str):  # is number
@@ -200,8 +209,10 @@ class ScreenShoter:
 
     def device_select(self) -> None:
         """
-        choose one device, saved to instance variable
+        choose one device, saved to instance variable.
         todo: distinguish the "None" that no device, and the "None" that only one device???
+
+        :return:
         """
         counter = 1
         input_desc = "type number({}-{}) to select, type enter to reload devices: \n".format(1, len(self.devices))
@@ -233,7 +244,9 @@ class ScreenShoter:
 
     def choose_command(self) -> int:
         """
-        main UI, choose one option to do something
+        main UI, choose option and to do something.
+
+        :return:
         """
         cur_device_dict = self.devices[self.device_id]
         os.system("clear")  # clear screen
@@ -257,9 +270,11 @@ class ScreenShoter:
                 print("please try again...")
         return num
 
-    def rename_file(self):
+    def rename_file(self) -> None:
         """
-        call the rename_file method of ShotUtils
+        call the rename_file method of ShotUtils in a loop.
+
+        :return:
         """
         msg = "print enter to continue, type a new name to rename file: "
         while True:
@@ -272,16 +287,15 @@ class ScreenShoter:
                 else:
                     print("please try to type an valid file name...")
 
-    def main(self):
+    def main(self) -> None:
         """
-        todo: include all code block of main method within try...except...?
+        main method.
+        todo: apply two methods in UiUtils class
+              then include all code block of main method within try...except...?
               on error start next round?
-        todoX: "press "q" to quit any where", add one input like method
-                  q then sys.exit(); add a bit describe, sleep before quit?
-                  NO need, must set shell preference in order to close window after "exit"
-        todo: refine the code: function's docstring, class's docstring, class's Config...
-        todo?: self.print(from, indent), from adb/py/..., indent is int
         todo: remove abandoned methods in some time
+
+        :return:
         """
         if len(self.devices) == 0:
             self.device_select()

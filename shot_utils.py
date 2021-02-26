@@ -7,7 +7,7 @@ from config import Config
 
 class ShotUtils():
     """
-    screencap, screenrecord, rename methods included
+    screencap, screenrecord, rename methods included.
     """
     def __init__(self) -> None:
         self.config = Config()
@@ -24,7 +24,11 @@ class ShotUtils():
 
     def screencap(self, os: str, id: str) -> bool:
         """
-        take screencap
+        take screencap,, then pull to macbook.
+
+        :param os: Android or iOS
+        :param id: Android's serialno or iOS's udid
+        :return:
         """
         print("taking screencap...")
         try:
@@ -32,15 +36,15 @@ class ShotUtils():
                 if self._screencap_Android(id):
                     return True
                 else:
-                    input("press enter to continue...")  # is it appropriate???
+                    input("press enter to continue...")  # is it appropriate here?
                     return False
             elif os == "iOS":
                 if self._screencap_iOS(id):
                     return True
                 else:
-                    input("press enter to continue...")  # is it appropriate???
+                    input("press enter to continue...")  # is it appropriate here?
                     return False
-            # input("press enter to continue...")  # is it appropriate???
+            # input("press enter to continue...")  # is it appropriate here?
         except Exception as e:
             traceback.print_exc()
             print("sorry, screencap failed for some reason, please try again...")
@@ -49,7 +53,10 @@ class ShotUtils():
 
     def _screencap_Android(self, serialno: str) -> bool:
         """
-        take screencap of Android, then pull to macbook
+        take screencap of Android, then pull to macbook.
+
+        :param serialno: Android's serialno obtained from adb devices
+        :return:
         """
         cmd = ["adb", "-s", serialno, "shell", "screencap", "-p", "{}{}{}"
                .format(self.default_save_path_android, self.default_name_base, self.default_suffix_img)]
@@ -71,7 +78,10 @@ class ShotUtils():
 
     def _screencap_iOS(self, udid: str) -> bool:
         """
-        take screencap of iOS (no need to pull like Android)
+        take screencap of iOS (no need to pull like Android).
+
+        :param udid: iPhone's udid
+        :return:
         """
         name_safe = self._get_safe_names(self.default_name_base, self.default_suffix_img)
         # res = os.popen("idevicescreenshot -u {} {}{}"
@@ -90,9 +100,13 @@ class ShotUtils():
 
     def screenrecord(self, os: str, id: str) -> bool:
         """
-        take screenrecord, then pull to macbook
+        take screenrecord, then pull to macbook.
+
+        :param os: Android or iOS
+        :param id: Android's serialno or iOS's udid
+        :return:
         """
-        # print("taking screenrecord...")
+        # print("taking screenrecord...")  # not appropriate here?
         try:
             if os == "Android":
                 print("taking screenrecord...")
@@ -103,7 +117,7 @@ class ShotUtils():
                     return False
             else:
                 self._screenrecord_iOS(id)
-                return False  # not support currently...
+                return False  # iOS not support currently...
         except Exception as e:
             traceback.print_exc()
             print("sorry, screenrecord failed for some reason, please try again...")
@@ -113,8 +127,13 @@ class ShotUtils():
     def _screenrecord_Android(self, serialno: str, resolution:str, time_limit:int) -> bool:
         """
         take screenrecord of Android, then pull to macbook.
-        currently the resolution and time_limit can be adjust (attribute of class Config).
-        todo: add more parameters if necessary...
+        currently only the resolution and time_limit can be adjust (attribute of class Config).
+        todo: add more command parameters if necessary...
+
+        :param serialno:
+        :param resolution:
+        :param time_limit:
+        :return:
         """
         if not resolution:  # fail to get resolution
             return False
@@ -163,13 +182,21 @@ class ShotUtils():
     def _screenrecord_iOS(self, udid: str) -> None:
         """
         libimobiledevice do NOT support take screenrecord of iOS...
+
+        :param udid: iPhone's udid
+        :return:
         """
         print("screenrecord for iOS is NOT SUPPORT by libimobiledevice...")
         input("press enter to continue...")
 
     def _pull_from_android(self, serialno: str, name_safe: str, shot_type: str) -> bool:
         """
-        pull screencap/screenrecord from android to macbook
+        pull screencap/screenrecord from Android device to macbook.
+
+        :param serialno: Android's serialno obtained from adb devices.
+        :param name_safe: name of file to be saved
+        :param shot_type: screencap or screenrecord
+        :return:
         """
         suffix = ""
         if shot_type == "screencap":
@@ -193,7 +220,11 @@ class ShotUtils():
 
     def _get_safe_names(self, name: str, suffix: str) -> str:
         """
-        get an "save_name" according to one file name and it's suffix, to avoid duplicate names
+        get an "save_name" according to one file name and it's suffix, to avoid duplicate names.
+
+        :param name: name tobe check
+        :param suffix: suffix of the file
+        :return:
         """
         existing_files = os.popen("ls -a {}".format(self.default_save_path)).readlines()
         for i in range(len(existing_files)):
@@ -217,7 +248,10 @@ class ShotUtils():
 
     def rename_file(self, new_name: str) -> bool:
         """
-        rename file after saved to local
+        rename file after saved to local.
+
+        :param new_name: new file name
+        :return:
         """
         old_name = self.current_name
         old_file = self.config.default_save_path + old_name
@@ -245,7 +279,10 @@ class ShotUtils():
 
     def _get_resolution(self, serialno: str) -> str or bool:
         """
-        calculate resolution which used for screenrecord, e.g. 540x1170
+        calculate resolution that use to take screenrecord, e.g. 540x1170
+
+        :param serialno: Android's serialno obtained from adb devices
+        :return:
         """
         cmd = ["adb", "-s", serialno, "shell", "dumpsys", "window", "displays", "|", "grep", "init"]
         pp = Popen(cmd, stdout=PIPE, stderr=PIPE)  # os.popen can not get error message
@@ -285,5 +322,5 @@ class ShotUtils():
 if __name__ == "__main__":
     su = ShotUtils()
     su.screencap("Android", "af699j76")
-    su.screencap("iOS", "445CC7AB8D8F7A105CD90D04F65D29B3F945A814AFMQIQF")
+    su.screencap("iOS", "4P5CC7AS8D8F7A105CD90D04F65E9B3F945A814AFMQIQF")
     print("done~")

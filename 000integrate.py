@@ -12,6 +12,7 @@ class Integrate:
     def integrate(self) -> None:
         """
         integreate each .py into a sigle executable file
+
         :return:
         """
         script_path = "/".join(os.path.abspath(sys.argv[0]).split("/")[:-1])
@@ -19,6 +20,7 @@ class Integrate:
                         "dependency_check.py",
                         "device_getter.py",
                         "shot_utils.py",
+                        "ui_utils.py",
                         "",
                         "main.py", ]  # files to integrate one by one (a "main.py" at last is necessary)
         from_locals = ["from {} import".format(x[:-3]) for x in script_files if x]  # used to exclude local imports

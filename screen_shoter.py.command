@@ -10,27 +10,29 @@ import re
 from subprocess import Popen, PIPE
 from collections import OrderedDict
 from typing import List, Dict
+from typing import Tuple
 from typing import List
 from pprint import pprint
 
 
-class Config:
+
+class Config():
     """
-    save the config infos
-    todo: add some data verifications? in case invalid be set
+    save the config infos.
+    todo: add some data verifications? in case invalid be set...
     """
     def __init__(self):
         self.interpreter_path = "#!/usr/bin/env python3"  # first line, set python interpreter
         self.default_save_path = "~/Desktop/"  # default saveing path
-        self.default_name_base = "demo"  # default name of screenshot / screenrecord
+        self.default_name_base = "demo"  # default name of screenshot
         self.default_suffix_img = ".png"  # screencap image format
         self.default_suffix_video = ".mp4"  # screenrecord video format
-        self.resolution_setting = 3  # 0, 1, 2, 3, 4 represents full, 2/3, half, 1/3, 1/4 of full resolution
+        self.resolution_setting = 3  # 0, 1, 2, 3, 4 represents full, 2/3, half, 1/3, 1/4 of full resolution seperately
                                      # float(0-1) supported, like 0.8, 0.5(namely half of full resolution), 0.3, ...
-        self.time_limit = 0  # maximum screenrecord lehgth (seconds), 0 means default 180s
-        # ProductType and common name of iPhone. From internet, error may exists...
-        self.default_save_path_android = "/sdcard/"  # temp saving path on Android for screencap/screenrecord
+        self.time_limit = 0  # maximum screenrecord lehgth (in seconds), 0 means default 180s
+        self.default_save_path_android = "/sdcard/"  # temp saving path on Android for screenshot
         self.interface = 1  # which interface tobe used, 1 is default, 2 is simple version
+        # ProductType and common name of iPhone. From internet, error may exists...
         self.product_type_name = {"iPhone3,1": "iPhone 4", "iPhone3,2": "iPhone 4", "iPhone3,3": "iPhone 4",
                                   "iPhone4,1": "iPhone 4S", "iPhone5,1": "iPhone 5", "iPhone5,2": "iPhone 5",
                                   "iPhone5,3": "iPhone 5c", "iPhone5,4": "iPhone 5c", "iPhone6,1": "iPhone 5s",
@@ -47,16 +49,20 @@ class Config:
 
     def _row_occupied(self, input_str: str) -> int:
         """
-        calculate how many rows are need to display a string,
-        according to the size of terminal.
+        calculate how many rows are need to display a string, based on the size of terminal.
+
+        :param input_str: input string
+        :return:
         """
         terminal_width = shutil.get_terminal_size().columns
         return math.ceil(len(input_str) / terminal_width)
 
     def print_config(self, desc_row_num: int) -> None:
         """
-        print all configs
-        desc_row_num: row number of header lines
+        print all configs, and their describe if exist.
+
+        :param desc_row_num: rows to reserve for header lines
+        :return:
         """
         describe = {"interface": "which interface tobe used, 1 is default, 2 is simple version",
                 "default_save_path": "where to save screenshot",
@@ -96,9 +102,9 @@ class Config:
         input("press enter to continue: ")
 
 
-class DependencyCheck:
+class DependencyCheck():
     """
-    check if adb and libimobiledevice installed
+    check if adb and libimobiledevice installed.
     """
     def __init__(self):
         self.dependency_check = ""
@@ -120,6 +126,11 @@ class DependencyCheck:
             self.msg = "both adb and libimobiledevice may [NOT] installed，ScreenShoter may not work.."
 
     def _adb_check(self) -> bool:
+        """
+        check adb installation.
+
+        :return:
+        """
         cmd = ["adb", "devices"]
         pp = Popen(cmd, stdout=PIPE, stderr=PIPE)
         temp = pp.communicate()
@@ -131,6 +142,11 @@ class DependencyCheck:
             return False
 
     def _libimobiledevice_check(self) -> bool:
+        """
+        check libimobiledevice installation.
+
+        :return:
+        """
         cmd = ["idevice_id", "-h"]
         pp = Popen(cmd, stdout=PIPE, stderr=PIPE)
         temp = pp.communicate()
@@ -144,7 +160,7 @@ class DependencyCheck:
 
 class DeviceGetter:
     """
-    get devices and their info through adb / libimobiledevice, save to OrderedDict like:
+    get devices and their info using adb / libimobiledevice, save to an OrderedDict like:
     OrderedDict([('some_serialno', {'device_name': '/',
                                     'os': 'Android',
                                     'product_name': 'TKC-A7000',
@@ -160,7 +176,6 @@ class DeviceGetter:
     """
     def __init__(self):
         self.config = Config()
-        # ProductType and common name of iPhone. From internet, error may exists
         self.product_type_name = self.config.product_type_name
         devices = OrderedDict()
         devices.update(self._get_android_devices())
@@ -169,8 +184,10 @@ class DeviceGetter:
 
     def _get_Popen_res(self, cmd: List[str]) -> str:
         """
-        get result of Popen
-        ***todo, distinguish stdout and stderr??
+        get the result of Popen.
+        todo: distinguish stdout and stderr???
+
+        :param cmd: list like command
         :return:
         """
         pp = Popen(cmd, stdout=PIPE, stderr=PIPE)
@@ -187,8 +204,9 @@ class DeviceGetter:
 
     def _get_android_devices_info(self, serialno: str) -> Dict:
         """
-        get Android device's info
-        :param serialno:
+        get Android device's info.
+
+        :param serialno: serialno obtained using adb devices
         :return:
         """
         infos = dict()
@@ -207,7 +225,8 @@ class DeviceGetter:
 
     def _get_android_devices(self) -> Dict:
         """
-        get Android devices list and their infos
+        get Android devices list and their infos.
+
         :return:
         """
         cmd = ["adb", "devices"]
@@ -233,7 +252,9 @@ class DeviceGetter:
 
     def _get_ios_device_name(self, product_type: str) -> str:
         """
-        "translate" from ProductType to common name
+        transfer from ProductType to common name.
+
+        :param product_type: iPhone's product type
         :return:
         """
         try:
@@ -244,8 +265,9 @@ class DeviceGetter:
 
     def _get_ios_device_info(self, udid: str) -> Dict:
         """
-        get ios device's info
-        :param udid:
+        get iOS device's info.
+
+        :param udid: iPhone's udid
         :return:
         """
         cmd = ["ideviceinfo", "-u", "{}".format(udid)]  # no blank in command to be Popen; depend libimobiledevice
@@ -268,7 +290,8 @@ class DeviceGetter:
 
     def _get_ios_devices(self) -> Dict:
         """
-        get iOS devices list and their infos
+        get iOS devices list and their infos.
+
         :return:
         """
         cmd = ["idevice_id"]  # command of libimobiledevice
@@ -294,7 +317,7 @@ class DeviceGetter:
 
 class ShotUtils():
     """
-    screencap, screenrecord, rename methods included
+    screencap, screenrecord, rename methods included.
     """
     def __init__(self) -> None:
         self.config = Config()
@@ -311,7 +334,11 @@ class ShotUtils():
 
     def screencap(self, os: str, id: str) -> bool:
         """
-        take screencap
+        take screencap,, then pull to macbook.
+
+        :param os: Android or iOS
+        :param id: Android's serialno or iOS's udid
+        :return:
         """
         print("taking screencap...")
         try:
@@ -319,15 +346,15 @@ class ShotUtils():
                 if self._screencap_Android(id):
                     return True
                 else:
-                    input("press enter to continue...")  # is it appropriate???
+                    input("press enter to continue...")  # is it appropriate here?
                     return False
             elif os == "iOS":
                 if self._screencap_iOS(id):
                     return True
                 else:
-                    input("press enter to continue...")  # is it appropriate???
+                    input("press enter to continue...")  # is it appropriate here?
                     return False
-            # input("press enter to continue...")  # is it appropriate???
+            # input("press enter to continue...")  # is it appropriate here?
         except Exception as e:
             traceback.print_exc()
             print("sorry, screencap failed for some reason, please try again...")
@@ -336,7 +363,10 @@ class ShotUtils():
 
     def _screencap_Android(self, serialno: str) -> bool:
         """
-        take screencap of Android, then pull to macbook
+        take screencap of Android, then pull to macbook.
+
+        :param serialno: Android's serialno obtained from adb devices
+        :return:
         """
         cmd = ["adb", "-s", serialno, "shell", "screencap", "-p", "{}{}{}"
                .format(self.default_save_path_android, self.default_name_base, self.default_suffix_img)]
@@ -358,7 +388,10 @@ class ShotUtils():
 
     def _screencap_iOS(self, udid: str) -> bool:
         """
-        take screencap of iOS (no need to pull like Android)
+        take screencap of iOS (no need to pull like Android).
+
+        :param udid: iPhone's udid
+        :return:
         """
         name_safe = self._get_safe_names(self.default_name_base, self.default_suffix_img)
         # res = os.popen("idevicescreenshot -u {} {}{}"
@@ -377,9 +410,13 @@ class ShotUtils():
 
     def screenrecord(self, os: str, id: str) -> bool:
         """
-        take screenrecord, then pull to macbook
+        take screenrecord, then pull to macbook.
+
+        :param os: Android or iOS
+        :param id: Android's serialno or iOS's udid
+        :return:
         """
-        # print("taking screenrecord...")
+        # print("taking screenrecord...")  # not appropriate here?
         try:
             if os == "Android":
                 print("taking screenrecord...")
@@ -390,7 +427,7 @@ class ShotUtils():
                     return False
             else:
                 self._screenrecord_iOS(id)
-                return False  # not support currently...
+                return False  # iOS not support currently...
         except Exception as e:
             traceback.print_exc()
             print("sorry, screenrecord failed for some reason, please try again...")
@@ -400,8 +437,13 @@ class ShotUtils():
     def _screenrecord_Android(self, serialno: str, resolution:str, time_limit:int) -> bool:
         """
         take screenrecord of Android, then pull to macbook.
-        currently the resolution and time_limit can be adjust (attribute of class Config).
-        todo: add more parameters if necessary...
+        currently only the resolution and time_limit can be adjust (attribute of class Config).
+        todo: add more command parameters if necessary...
+
+        :param serialno:
+        :param resolution:
+        :param time_limit:
+        :return:
         """
         if not resolution:  # fail to get resolution
             return False
@@ -450,13 +492,21 @@ class ShotUtils():
     def _screenrecord_iOS(self, udid: str) -> None:
         """
         libimobiledevice do NOT support take screenrecord of iOS...
+
+        :param udid: iPhone's udid
+        :return:
         """
         print("screenrecord for iOS is NOT SUPPORT by libimobiledevice...")
         input("press enter to continue...")
 
     def _pull_from_android(self, serialno: str, name_safe: str, shot_type: str) -> bool:
         """
-        pull screencap/screenrecord from android to macbook
+        pull screencap/screenrecord from Android device to macbook.
+
+        :param serialno: Android's serialno obtained from adb devices.
+        :param name_safe: name of file to be saved
+        :param shot_type: screencap or screenrecord
+        :return:
         """
         suffix = ""
         if shot_type == "screencap":
@@ -480,7 +530,11 @@ class ShotUtils():
 
     def _get_safe_names(self, name: str, suffix: str) -> str:
         """
-        get an "save_name" according to one file name and it's suffix, to avoid duplicate names
+        get an "save_name" according to one file name and it's suffix, to avoid duplicate names.
+
+        :param name: name tobe check
+        :param suffix: suffix of the file
+        :return:
         """
         existing_files = os.popen("ls -a {}".format(self.default_save_path)).readlines()
         for i in range(len(existing_files)):
@@ -504,7 +558,10 @@ class ShotUtils():
 
     def rename_file(self, new_name: str) -> bool:
         """
-        rename file after saved to local
+        rename file after saved to local.
+
+        :param new_name: new file name
+        :return:
         """
         old_name = self.current_name
         old_file = self.config.default_save_path + old_name
@@ -532,7 +589,10 @@ class ShotUtils():
 
     def _get_resolution(self, serialno: str) -> str or bool:
         """
-        calculate resolution which used for screenrecord, e.g. 540x1170
+        calculate resolution that use to take screenrecord, e.g. 540x1170
+
+        :param serialno: Android's serialno obtained from adb devices
+        :return:
         """
         cmd = ["adb", "-s", serialno, "shell", "dumpsys", "window", "displays", "|", "grep", "init"]
         pp = Popen(cmd, stdout=PIPE, stderr=PIPE)  # os.popen can not get error message
@@ -569,13 +629,52 @@ class ShotUtils():
                 return "x".join([str(x) for x in resol_default])
 
 
+class UiUtils():
+    """
+    custom print and input method.
+    """
+    def __init__(self) -> None:
+        pass
+
+    def sprint(self, content: Tuple or str, header: str = "", indent_blank: int = 0, sep: str = ' ', end: str = '\n') -> None:
+        """
+        optionally add header, indent when print.
+
+        :param content: string to be print
+        :param header: before content
+        :param indent_blank: add how many blanks at the begining
+        :param sep: sep of print
+        :param end: end of print
+        :return:
+        """
+        if isinstance(content, str):
+            temp = content
+        else:
+            temp = sep.join(content)
+        print(" " * indent_blank + header + temp, end = end)
+
+    def sinput(self, prompt: str) -> str:
+        """
+        input "q" to close terminal.
+        Terminal, Preferences > Profiles > Shell > When the shell exits > Close the window.
+
+        :param prompt: prompt
+        :return: the input
+        """
+        inputt = input(prompt)
+        if inputt.lower() == "q":
+            return os.popen("exit").readline()
+        else:
+            return inputt
+
+
 class ScreenShoter:
     """
-    main class
+    main class.
     todo, lots of error handler to add...
-    todo, future? get device crash log???
+    todo, get device's crash log?
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.config = Config()
         self.dependency_check = DependencyCheck()
         self.devices = DeviceGetter().devices
@@ -598,6 +697,7 @@ class ScreenShoter:
     def pre_interface(self) -> None:
         """
         print some "log", just for fun...
+
         :return:
         """
         time_a = 0.06
@@ -609,10 +709,10 @@ class ScreenShoter:
 
     def split_msg(self, strr: str, terminal_width: int) -> List:
         """
-        according to terminal's column num, split long str to shorter ones
-        just in case...
-        :param strr:
-        :param terminal_width:
+        according to terminal's column num, split long str to shorter ones. just in case...
+
+        :param strr: string to split
+        :param terminal_width: terminal width in characters
         :return:
         """
         res = []
@@ -630,7 +730,8 @@ class ScreenShoter:
 
     def initial_interface(self) -> None:
         """
-        create initial interface (in terminal...)
+        create initial interface in terminal...
+
         :return:
         """
         terminal_height = shutil.get_terminal_size().lines  # os.get_...() will get and error...
@@ -667,7 +768,8 @@ class ScreenShoter:
 
     def initial_interface_simple(self) -> None:
         """
-        in case of odd UI...
+        in case of odd UI appears...
+
         :return:
         """
         print("\n" + self.dependency_check.msg)
@@ -702,10 +804,11 @@ class ScreenShoter:
             res = input("press enter to retry: ")
             return res
 
-    def device_select_interface(self):
+    def device_select_interface(self) -> None:
         """
-        no device UI / select device UI
-        specify device by set the instance variable
+        no device UI / select device UI. specify device by set the instance variable.
+
+        :return:
         """
         print("please select your target device:")
         counter = 1
@@ -719,7 +822,12 @@ class ScreenShoter:
 
     def verify_input(self, input_str: str, lower_limit: int, upper_limit: int) -> bool:
         """
-        varify if the input string is int like
+        varify if the input string is int like.
+
+        :param input_str: string to be verify
+        :param lower_limit: int range start
+        :param upper_limit: int range end
+        :return:
         """
         try:
             if re.match(r"[0-9]+", input_str):  # is number
@@ -758,8 +866,10 @@ class ScreenShoter:
 
     def device_select(self) -> None:
         """
-        choose one device, saved to instance variable
+        choose one device, saved to instance variable.
         todo: distinguish the "None" that no device, and the "None" that only one device???
+
+        :return:
         """
         counter = 1
         input_desc = "type number({}-{}) to select, type enter to reload devices: \n".format(1, len(self.devices))
@@ -791,7 +901,9 @@ class ScreenShoter:
 
     def choose_command(self) -> int:
         """
-        main UI, choose one option to do something
+        main UI, choose option and to do something.
+
+        :return:
         """
         cur_device_dict = self.devices[self.device_id]
         os.system("clear")  # clear screen
@@ -815,9 +927,11 @@ class ScreenShoter:
                 print("please try again...")
         return num
 
-    def rename_file(self):
+    def rename_file(self) -> None:
         """
-        call the rename_file method of ShotUtils
+        call the rename_file method of ShotUtils in a loop.
+
+        :return:
         """
         msg = "print enter to continue, type a new name to rename file: "
         while True:
@@ -830,16 +944,15 @@ class ScreenShoter:
                 else:
                     print("please try to type an valid file name...")
 
-    def main(self):
+    def main(self) -> None:
         """
-        todo: include all code block of main method within try...except...?
+        main method.
+        todo: apply two methods in UiUtils class
+              then include all code block of main method within try...except...?
               on error start next round?
-        todoX: "press "q" to quit any where", add one input like method
-                  q then sys.exit(); add a bit describe, sleep before quit?
-                  NO need, must set shell preference in order to close window after "exit"
-        todo: refine the code: function's docstring, class's docstring, class's Config...
-        todo?: self.print(from, indent), from adb/py/..., indent is int
         todo: remove abandoned methods in some time
+
+        :return:
         """
         if len(self.devices) == 0:
             self.device_select()

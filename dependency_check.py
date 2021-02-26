@@ -1,9 +1,9 @@
 from subprocess import Popen, PIPE
 
 
-class DependencyCheck:
+class DependencyCheck():
     """
-    check if adb and libimobiledevice installed
+    check if adb and libimobiledevice installed.
     """
     def __init__(self):
         self.dependency_check = ""
@@ -25,6 +25,11 @@ class DependencyCheck:
             self.msg = "both adb and libimobiledevice may [NOT] installed，ScreenShoter may not work.."
 
     def _adb_check(self) -> bool:
+        """
+        check adb installation.
+
+        :return:
+        """
         cmd = ["adb", "devices"]
         pp = Popen(cmd, stdout=PIPE, stderr=PIPE)
         temp = pp.communicate()
@@ -36,6 +41,11 @@ class DependencyCheck:
             return False
 
     def _libimobiledevice_check(self) -> bool:
+        """
+        check libimobiledevice installation.
+
+        :return:
+        """
         cmd = ["idevice_id", "-h"]
         pp = Popen(cmd, stdout=PIPE, stderr=PIPE)
         temp = pp.communicate()

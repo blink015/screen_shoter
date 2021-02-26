@@ -6,7 +6,7 @@ from config import Config
 
 class DeviceGetter:
     """
-    get devices and their info through adb / libimobiledevice, save to OrderedDict like:
+    get devices and their info using adb / libimobiledevice, save to an OrderedDict like:
     OrderedDict([('some_serialno', {'device_name': '/',
                                     'os': 'Android',
                                     'product_name': 'TKC-A7000',
@@ -22,7 +22,6 @@ class DeviceGetter:
     """
     def __init__(self):
         self.config = Config()
-        # ProductType and common name of iPhone. From internet, error may exists
         self.product_type_name = self.config.product_type_name
         devices = OrderedDict()
         devices.update(self._get_android_devices())
@@ -31,8 +30,10 @@ class DeviceGetter:
 
     def _get_Popen_res(self, cmd: List[str]) -> str:
         """
-        get result of Popen
-        ***todo, distinguish stdout and stderr??
+        get the result of Popen.
+        todo: distinguish stdout and stderr???
+
+        :param cmd: list like command
         :return:
         """
         pp = Popen(cmd, stdout=PIPE, stderr=PIPE)
@@ -49,8 +50,9 @@ class DeviceGetter:
 
     def _get_android_devices_info(self, serialno: str) -> Dict:
         """
-        get Android device's info
-        :param serialno:
+        get Android device's info.
+
+        :param serialno: serialno obtained using adb devices
         :return:
         """
         infos = dict()
@@ -69,7 +71,8 @@ class DeviceGetter:
 
     def _get_android_devices(self) -> Dict:
         """
-        get Android devices list and their infos
+        get Android devices list and their infos.
+
         :return:
         """
         cmd = ["adb", "devices"]
@@ -95,7 +98,9 @@ class DeviceGetter:
 
     def _get_ios_device_name(self, product_type: str) -> str:
         """
-        "translate" from ProductType to common name
+        transfer from ProductType to common name.
+
+        :param product_type: iPhone's product type
         :return:
         """
         try:
@@ -106,8 +111,9 @@ class DeviceGetter:
 
     def _get_ios_device_info(self, udid: str) -> Dict:
         """
-        get ios device's info
-        :param udid:
+        get iOS device's info.
+
+        :param udid: iPhone's udid
         :return:
         """
         cmd = ["ideviceinfo", "-u", "{}".format(udid)]  # no blank in command to be Popen; depend libimobiledevice
@@ -130,7 +136,8 @@ class DeviceGetter:
 
     def _get_ios_devices(self) -> Dict:
         """
-        get iOS devices list and their infos
+        get iOS devices list and their infos.
+
         :return:
         """
         cmd = ["idevice_id"]  # command of libimobiledevice

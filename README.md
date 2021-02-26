@@ -38,14 +38,14 @@ Besides, you can scroll down to find history messages, they were not really ears
 
 Options were stored in instance variables of class *Config*. You can modify them manually. Open **screen_shoter.py.command** in a text editor, class *Config* lies at the beginning. All options and their description listed within the *\_\_init\_\_* method.
 
-| Some Options               | Description                                         |
-| -------------------------- | --------------------------------------------------- |
-| `self.interpreter_path`    | set the python interpreter                          |
-| `self.default_save_path`   | where to save screenshot                            |
-| `self.resolution_setting`  | set the resolution of screenrecord (for Android)    |
-| `self.time_limit`          | set the max length of screenrecord (for Android)    |
-| `self.interface`           | skip initial_interface if set to 2                  |
-| `self.product_type_name`   | Interact with the debugserver service of a device   |
+| Some Options               | Description                                               |
+| -------------------------- | --------------------------------------------------------- |
+| `self.interpreter_path`    | Set the python interpreter                                |
+| `self.default_save_path`   | Where to save screenshot                                  |
+| `self.resolution_setting`  | Set the resolution of screenrecord (for Android)          |
+| `self.time_limit`          | Set the max length of screenrecord (for Android)          |
+| `self.interface`           | Skip initial_interface if set to 2                        |
+| `self.product_type_name`   | Common name of iPhone corresponding to the product_type   |
 
 ## Note
 

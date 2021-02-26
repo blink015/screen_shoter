@@ -2,23 +2,24 @@ import shutil
 import math
 import os
 
-class Config:
+
+class Config():
     """
-    save the config infos
-    todo: add some data verifications? in case invalid be set
+    save the config infos.
+    todo: add some data verifications? in case invalid be set...
     """
     def __init__(self):
         self.interpreter_path = "#!/usr/bin/env python3"  # first line, set python interpreter
         self.default_save_path = "~/Desktop/"  # default saveing path
-        self.default_name_base = "demo"  # default name of screenshot / screenrecord
+        self.default_name_base = "demo"  # default name of screenshot
         self.default_suffix_img = ".png"  # screencap image format
         self.default_suffix_video = ".mp4"  # screenrecord video format
-        self.resolution_setting = 3  # 0, 1, 2, 3, 4 represents full, 2/3, half, 1/3, 1/4 of full resolution
+        self.resolution_setting = 3  # 0, 1, 2, 3, 4 represents full, 2/3, half, 1/3, 1/4 of full resolution seperately
                                      # float(0-1) supported, like 0.8, 0.5(namely half of full resolution), 0.3, ...
-        self.time_limit = 0  # maximum screenrecord lehgth (seconds), 0 means default 180s
-        # ProductType and common name of iPhone. From internet, error may exists...
-        self.default_save_path_android = "/sdcard/"  # temp saving path on Android for screencap/screenrecord
+        self.time_limit = 0  # maximum screenrecord lehgth (in seconds), 0 means default 180s
+        self.default_save_path_android = "/sdcard/"  # temp saving path on Android for screenshot
         self.interface = 1  # which interface tobe used, 1 is default, 2 is simple version
+        # ProductType and common name of iPhone. From internet, error may exists...
         self.product_type_name = {"iPhone3,1": "iPhone 4", "iPhone3,2": "iPhone 4", "iPhone3,3": "iPhone 4",
                                   "iPhone4,1": "iPhone 4S", "iPhone5,1": "iPhone 5", "iPhone5,2": "iPhone 5",
                                   "iPhone5,3": "iPhone 5c", "iPhone5,4": "iPhone 5c", "iPhone6,1": "iPhone 5s",
@@ -35,16 +36,20 @@ class Config:
 
     def _row_occupied(self, input_str: str) -> int:
         """
-        calculate how many rows are need to display a string,
-        according to the size of terminal.
+        calculate how many rows are need to display a string, based on the size of terminal.
+
+        :param input_str: input string
+        :return:
         """
         terminal_width = shutil.get_terminal_size().columns
         return math.ceil(len(input_str) / terminal_width)
 
     def print_config(self, desc_row_num: int) -> None:
         """
-        print all configs
-        desc_row_num: row number of header lines
+        print all configs, and their describe if exist.
+
+        :param desc_row_num: rows to reserve for header lines
+        :return:
         """
         describe = {"interface": "which interface tobe used, 1 is default, 2 is simple version",
                 "default_save_path": "where to save screenshot",
