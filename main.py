@@ -3,19 +3,20 @@ import sys
 import time
 import shutil
 import re
+import traceback
 from typing import List
-from pprint import pprint
 from dependency_check import DependencyCheck
 from device_getter import DeviceGetter
 from shot_utils import ShotUtils
 from config import Config
+from ui_utils import UiUtils
 
 
 class ScreenShoter:
     """
     main class.
     todo, lots of error handler to add...
-    todo, get device's crash log?
+    todo, get device's crash log?...
     """
     def __init__(self) -> None:
         self.config = Config()
@@ -35,7 +36,14 @@ class ScreenShoter:
             self.initial_interface_simple()
 
         # main
-        self.main()
+        while True:
+            try:
+                self.main()
+            except Exception as e:
+                os.system("clear")
+                traceback.print_exc()
+                UiUtils.sprint("unknown error occured...")
+                UiUtils.sinput("press enter to reload...")
 
     def pre_interface(self) -> None:
         """
@@ -46,7 +54,7 @@ class ScreenShoter:
         time_a = 0.06
         infos = ["init...", "reading config...", "dependency checking...", "accessing devices..."]
         for info in infos:
-            print(info)
+            UiUtils.sprint(info)
             time.sleep(time_a)
         time.sleep(0.4 - time_a)
 
@@ -106,8 +114,8 @@ class ScreenShoter:
                 pass
 
         for i in range(len(first_interface)):
-            print(first_interface[i])
-        input(" press enter to start: ")
+            UiUtils.sprint(first_interface[i])
+        UiUtils.sinput(" press enter to start (\"q\" to quit anywhere): ")  # consider only one line here
 
     def initial_interface_simple(self) -> None:
         """
@@ -115,8 +123,8 @@ class ScreenShoter:
 
         :return:
         """
-        print("\n" + self.dependency_check.msg)
-        input("press enter to start: ")
+        UiUtils.sprint("\n" + self.dependency_check.msg)
+        UiUtils.sinput("press enter to start (\"q\" to quit anywhere): ")
 
     def device_select_interface_abandon(self) -> str or None:
         """
@@ -130,21 +138,21 @@ class ScreenShoter:
                 pass
                 return None
             else:
-                print("please select your target device:")
+                UiUtils.sprint("please select your target device:")
                 counter = 1
                 for k, v in self.devices.items():
                     if v["os"] == "Android" or v["os"] == "iOS":  # in case of display infos separately
-                        print("{}. name: {}\tos: {}\tos_version: {}".
-                              format(counter, v["product_name"].ljust(21, " "),
-                                     v["os"].ljust(9, " "), v["os_version"]))
+                        UiUtils.sprint("{}. name: {}\tos: {}\tos_version: {}".
+                                        format(counter, v["product_name"].ljust(21, " "),
+                                        v["os"].ljust(9, " "), v["os_version"]))
                     else:
                         raise Exception("no 'os' attribute found within devices's dict.")
                     counter += 1
-                number = input("type number({}-{}) here to select: ".format(1, len(self.devices)))
+                number = UiUtils.sinput("type number({}-{}) here to select: ".format(1, len(self.devices)))
                 return number
         else:
-            print("no device/simulator found...")
-            res = input("press enter to retry: ")
+            UiUtils.sprint("no device/simulator found...")
+            res = UiUtils.sinput("press enter to retry: ")
             return res
 
     def device_select_interface(self) -> None:
@@ -153,12 +161,12 @@ class ScreenShoter:
 
         :return:
         """
-        print("please select your target device:")
+        UiUtils.sprint("please select your target device:")
         counter = 1
         for k, v in self.devices.items():
             if v["os"] == "Android" or v["os"] == "iOS":  # in case of display infos separately
-                print("{}. name: {}\tos: {}\tos_version: {}".format(counter, v["product_name"].ljust(21, " "),
-                             v["os"].ljust(9, " "), v["os_version"]))
+                UiUtils.sprint("{}. name: {}\tos: {}\tos_version: {}".format(counter, v["product_name"].ljust(21, " "),
+                                v["os"].ljust(9, " "), v["os_version"]))
             else:
                 raise Exception("no 'os' attribute found within devices's dict.")
             counter += 1
@@ -192,9 +200,9 @@ class ScreenShoter:
         counter = 1
         while True:
             input_str = self.device_select_interface_abandon()
-            # print("[][][][][][][][]:" + repr(input_str))  ####
+            # UiUtils.sprint("[][][][][][][][]:" + repr(input_str))  ####
             if input_str == "":
-                # print("##################")  ####
+                # UiUtils.sprint("##################")  ####
                 self.devices = DeviceGetter().devices
             elif input_str is not None:  # multi devices
                 input_ok = self.verify_input(input_str, 1, len(self.devices))
@@ -225,19 +233,19 @@ class ScreenShoter:
                 else:
                     # os.system("clear")
                     self.device_select_interface()
-                    number_str = input(input_desc)
+                    number_str = UiUtils.sinput(input_desc)
                     if self.verify_input(number_str, 1, len(self.devices)):
                         self.device_id = list(self.devices.keys())[int(number_str) - 1]
                         break
                     elif number_str == "":
-                        print("reloading devices..."); time.sleep(0.7)
+                        UiUtils.sprint("reloading devices..."); time.sleep(0.7)
                         self.devices = DeviceGetter().devices
                     else:
-                        print("a valid number is need{}".format("."*counter)); time.sleep(1)
+                        UiUtils.sprint("a valid number is need{}".format("."*counter)); time.sleep(1)
             else:
-                print("no device/simulator found...")
-                input("press enter to retry: ")
-                print("reloading devices..."); time.sleep(0.7)
+                UiUtils.sprint("no device/simulator found...")
+                UiUtils.sinput("press enter to retry: ")
+                UiUtils.sprint("reloading devices..."); time.sleep(0.7)
                 self.devices = DeviceGetter().devices
 
             counter += 1
@@ -250,16 +258,16 @@ class ScreenShoter:
         """
         cur_device_dict = self.devices[self.device_id]
         os.system("clear")  # clear screen
-        print("current deivce: {}   {} {}".format(cur_device_dict["product_name"],
-                                                  cur_device_dict["os"], cur_device_dict["os_version"], ))
-        print("choose your option below: ")
-        print("1. to take screencap;")
-        print("2. to take screenrecord (Android only!);")
-        print("9. to change target device/simulator;")
-        print("0. to display current config;")
+        UiUtils.sprint("current deivce: {}   {} {}"
+                       .format(cur_device_dict["product_name"], cur_device_dict["os"], cur_device_dict["os_version"], ))
+        UiUtils.sprint("choose your option below: ")
+        UiUtils.sprint("1. to take screencap;")
+        UiUtils.sprint("2. to take screenrecord (Android only!);")
+        UiUtils.sprint("9. to change target device/simulator;")
+        UiUtils.sprint("0. to display current config;")
 
         while True:
-            num = input("your choice: ")
+            num = UiUtils.sinput("your choice: ")
             try:
                 num = int(num)
                 if num in [1, 2, 9, 0]:
@@ -267,7 +275,7 @@ class ScreenShoter:
                 else:
                     raise Exception
             except Exception as e:
-                print("please try again...")
+                UiUtils.sprint("please try again...")
         return num
 
     def rename_file(self) -> None:
@@ -278,22 +286,20 @@ class ScreenShoter:
         """
         msg = "print enter to continue, type a new name to rename file: "
         while True:
-            new_name = input(msg)
+            new_name = input(msg)  # can't use UiUtils.sinput here
             if not new_name:
                 break
             else:
                 if self.shot_utils.rename_file(new_name):
                     break
                 else:
-                    print("please try to type an valid file name...")
+                    UiUtils.sprint("please try to type an valid file name...")
 
     def main(self) -> None:
         """
         main method.
-        todo: apply two methods in UiUtils class
-              then include all code block of main method within try...except...?
-              on error start next round?
-        todo: remove abandoned methods in some time
+        todo: added UiUtils's sprint & sinput, search #@#@# if something goes wrong...
+        todo: remove abandoned methods in some time...
 
         :return:
         """
@@ -321,8 +327,8 @@ class ScreenShoter:
             elif cmd_serial == 9:  # change target deivce
                 self.devices = DeviceGetter().devices
                 if len(self.devices) == 1:
-                    print("only one device detected...")
-                    input("press enter to continue:")
+                    UiUtils.sprint("only one device detected...")
+                    UiUtils.sinput("press enter to continue:")
                 self.device_select()
             elif cmd_serial == 0:  # show all configs
                 os.system("clear")
@@ -330,7 +336,7 @@ class ScreenShoter:
                                 "you can change them manually within source code: ",
                                 "class Config, method __init__ ...",
                                 " -------------------------------------------", ]  # in order to calculate rows occupied
-                print("\n".join(header_lines))
+                UiUtils.sprint("\n".join(header_lines))
                 # self.config.print_config(4)  # why using specific value???
                 self.config.print_config(len(header_lines))
             else:

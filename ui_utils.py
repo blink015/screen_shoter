@@ -1,5 +1,7 @@
 import os
-from typing import Tuple
+import time
+from typing import List
+from subprocess import Popen, PIPE
 
 class UiUtils():
     """
@@ -8,7 +10,8 @@ class UiUtils():
     def __init__(self) -> None:
         pass
 
-    def sprint(self, content: Tuple or str, header: str = "", indent_blank: int = 0, sep: str = ' ', end: str = '\n') -> None:
+    @staticmethod
+    def sprint(content: List or str, header: str = "", indent_blank: int = 0, sep: str = ' ', end: str = '\n') -> None:
         """
         optionally add header, indent when print.
 
@@ -25,7 +28,8 @@ class UiUtils():
             temp = sep.join(content)
         print(" " * indent_blank + header + temp, end = end)
 
-    def sinput(self, prompt: str) -> str:
+    @staticmethod
+    def sinput(prompt: str) -> str:
         """
         input "q" to close terminal.
         Terminal, Preferences > Profiles > Shell > When the shell exits > Close the window.
@@ -35,12 +39,18 @@ class UiUtils():
         """
         inputt = input(prompt)
         if inputt.lower() == "q":
-            return os.popen("exit").readline()
+            os.system("clear")
+            UiUtils.sprint("exiting...")
+            time.sleep(1.4)
+            Popen("exit", stdin=PIPE, stdout=PIPE)  # os.popen JUST DO NOT WORK here ,like add shell=True
         else:
             return inputt
 
 
 if __name__ == "__main__":
-    uu = UiUtils()
-    print(uu.sinput("asdf: "))
-    uu.sprint(("abc", "sdfsdfdf"), "[header]", 4)
+    # uu = UiUtils()
+    # uu.sprint(("abc", "sdfsdfdf"), "[header]", 4)
+    # print(uu.sinput("asdf: "))
+
+    UiUtils.sprint(("abc", "sdfsdfdf"), "[header]", 4)
+    print(UiUtils.sinput("asdf: "))

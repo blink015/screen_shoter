@@ -1,6 +1,7 @@
 import shutil
 import math
 import os
+from ui_utils import UiUtils
 
 
 class Config():
@@ -78,15 +79,15 @@ class Config():
 
             rows += (self._row_occupied(k_and_v) + self._row_occupied(detail))
             if rows < terminal_height:
-                print(k_and_v + detail)
+                UiUtils.sprint(k_and_v + detail)
                 i += 1
             else:
-                choice = input("press enter to show more, q to go back:")
+                choice = input("press enter to show more, q to go back:")  # can not use UiUtils.sinput here
                 if choice == 'q':
                     return None
                 os.system("clear")
                 rows = 0
-        input("press enter to continue: ")
+        UiUtils.sinput("press enter to continue: ")
 
 
 if __name__ == "__main__":

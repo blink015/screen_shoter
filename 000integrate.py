@@ -3,9 +3,10 @@ import sys
 import re
 from collections import OrderedDict
 from config import Config
+from ui_utils import UiUtils
 
 
-class Integrate:
+class Integrate():
     def __init__(self) -> None:
         self.config = Config()
 
@@ -80,11 +81,12 @@ class Integrate:
                 f.writelines(k)
             for k in from_imports.keys():
                 f.writelines(k)
-            f.writelines("\n")
+            # f.writelines("\n\n")
             for line in code_lines:
                 f.writelines(line)
+            # f.writelines("\n")
 
-        print("done~")
+        UiUtils.sprint("done~")
 
 
 if __name__ == "__main__":

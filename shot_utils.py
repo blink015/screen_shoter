@@ -3,6 +3,7 @@ import time
 import traceback
 from subprocess import Popen, PIPE
 from config import Config
+from ui_utils import UiUtils
 
 
 class ShotUtils():
@@ -30,25 +31,25 @@ class ShotUtils():
         :param id: Android's serialno or iOS's udid
         :return:
         """
-        print("taking screencap...")
+        UiUtils.sprint("taking screencap...")
         try:
             if os == "Android":
                 if self._screencap_Android(id):
                     return True
                 else:
-                    input("press enter to continue...")  # is it appropriate here?
+                    UiUtils.sinput("press enter to continue...")  # is it appropriate here?
                     return False
             elif os == "iOS":
                 if self._screencap_iOS(id):
                     return True
                 else:
-                    input("press enter to continue...")  # is it appropriate here?
+                    UiUtils.sinput("press enter to continue...")  # is it appropriate here?
                     return False
-            # input("press enter to continue...")  # is it appropriate here?
+            # UiUtils.sinput("press enter to continue...")  # is it appropriate here?
         except Exception as e:
             traceback.print_exc()
-            print("sorry, screencap failed for some reason, please try again...")
-            input("press enter to continue...")  # is it appropriate???
+            UiUtils.sprint("sorry, screencap failed for some reason, please try again...")
+            UiUtils.sinput("press enter to continue...")  # is it appropriate???
             return False
 
     def _screencap_Android(self, serialno: str) -> bool:
@@ -63,12 +64,13 @@ class ShotUtils():
         pp = Popen(cmd, stdout=PIPE, stderr=PIPE)  # os.popen can not get error massage here
         res = pp.communicate()  # for this command, error message stored in res[1] if error uccured
         if res[1]:  # if error occured
-            print("screencap failed...")
-            print("[adb]{}".format(res[1].decode("utf-8").strip("\n ")))
-            # input("press enter to continue...")
+            UiUtils.sprint("screencap failed...")
+            UiUtils.sprint(res[1].decode("utf-8").strip("\n "), "[adb]")  #@#@#
+            # UiUtils.sprint("[adb]{}".format(res[1].decode("utf-8").strip("\n ")))
+            # UiUtils.sinput("press enter to continue...")
             return False
         else:  # pull to local and optionally rename
-            print("screencap saved to device/emulator \"/sdcard/{}.png\""
+            UiUtils.sprint("screencap saved to device/emulator \"/sdcard/{}.png\""
                   .format(self.default_name_base))
             name_safe = self._get_safe_names(self.default_name_base, self.default_suffix_img)
             if self._pull_from_android(serialno, name_safe, "screencap"):
@@ -91,11 +93,13 @@ class ShotUtils():
         res = pp.communicate()[0].decode("utf-8").strip("\n ")  # success/error message all here
         res = res.strip("\n ")
         if "Screenshot saved to" in res:
-            print("[libimobiledevice]{}".format(res))
+            UiUtils.sprint(res, "[libimobiledevice]")  #@#@#
+            # UiUtils.sprint("[libimobiledevice]{}".format(res))
             return True
         else:
-            print("screencap failed...")
-            print("[libimobiledevice]{}".format(res))
+            UiUtils.sprint("screencap failed...")
+            UiUtils.sprint(res, "[libimobiledevice]")  #@#@#
+            # UiUtils.sprint("[libimobiledevice]{}".format(res))
             return False
 
     def screenrecord(self, os: str, id: str) -> bool:
@@ -106,22 +110,22 @@ class ShotUtils():
         :param id: Android's serialno or iOS's udid
         :return:
         """
-        # print("taking screenrecord...")  # not appropriate here?
+        # UiUtils.sprint("taking screenrecord...")  # not appropriate here?
         try:
             if os == "Android":
-                print("taking screenrecord...")
+                UiUtils.sprint("taking screenrecord...")
                 if self._screenrecord_Android(id, self._get_resolution(id), self.time_limit):
                     return True
                 else:
-                    input("press enter to continue...")
+                    UiUtils.sinput("press enter to continue...")
                     return False
             else:
                 self._screenrecord_iOS(id)
                 return False  # iOS not support currently...
         except Exception as e:
             traceback.print_exc()
-            print("sorry, screenrecord failed for some reason, please try again...")
-            input("press enter to continue...")
+            UiUtils.sprint("sorry, screenrecord failed for some reason, please try again...")
+            UiUtils.sinput("press enter to continue...")
             return False
 
     def _screenrecord_Android(self, serialno: str, resolution:str, time_limit:int) -> bool:
@@ -139,14 +143,14 @@ class ShotUtils():
             return False
 
         if int(time_limit) !=0:
-            print("resolution:{}; max length:{}s".format(resolution, time_limit))
-            print("PRESS Ctrl+C to STOP recording:")
+            UiUtils.sprint("resolution:{}; max length:{}s".format(resolution, time_limit))
+            UiUtils.sprint("PRESS Ctrl+C to STOP recording:")
             cmd = ["adb", "-s", serialno, "shell", "screenrecord",
                    "--size", resolution, "--time-limit", str(int(time_limit)), "{}{}{}"
                    .format(self.default_save_path_android, self.default_name_base, self.default_suffix_video)]
         else:
-            print("resolution: {}; max length: 180s (default)".format(resolution))
-            print("PRESS Ctrl+C to STOP recording:")
+            UiUtils.sprint("resolution: {}; max length: 180s (default)".format(resolution))
+            UiUtils.sprint("PRESS Ctrl+C to STOP recording:")
             cmd = ["adb", "-s", serialno, "shell", "screenrecord",
                    "--size", resolution, "{}{}{}"
                    .format(self.default_save_path_android, self.default_name_base, self.default_suffix_video)]
@@ -161,16 +165,17 @@ class ShotUtils():
             pass
 
         if res == "initial":
-            print("\nscreenrecord saved to device/emulator \"{}{}{}\""
+            UiUtils.sprint("\nscreenrecord saved to device/emulator \"{}{}{}\""
                   .format(self.default_save_path_android, self.default_name_base, self.default_suffix_video))
         elif res[1]:  # error occured
-            print("screencap failed...")
-            print("[adb]{}".format(res[1]))
-            input("press enter to continue...")
+            UiUtils.sprint("screencap failed...")
+            UiUtils.sprint(res[1], "[adb]")  #@#@#
+            # UiUtils.sprint("[adb]{}".format(res[1]))
+            UiUtils.sinput("press enter to continue...")
             return False
         else:  # till max length
-            print("max length reached...")
-            print("screenrecord saved to device/emulator \"{}{}{}\""
+            UiUtils.sprint("max length reached...")
+            UiUtils.sprint("screenrecord saved to device/emulator \"{}{}{}\""
                   .format(self.default_save_path_android, self.default_name_base, self.default_suffix_video))
 
         name_safe = self._get_safe_names(self.default_name_base, self.default_suffix_video)
@@ -186,8 +191,8 @@ class ShotUtils():
         :param udid: iPhone's udid
         :return:
         """
-        print("screenrecord for iOS is NOT SUPPORT by libimobiledevice...")
-        input("press enter to continue...")
+        UiUtils.sprint("screenrecord for iOS is NOT SUPPORT by libimobiledevice...")
+        UiUtils.sinput("press enter to continue...")
 
     def _pull_from_android(self, serialno: str, name_safe: str, shot_type: str) -> bool:
         """
@@ -204,18 +209,19 @@ class ShotUtils():
         elif shot_type == "screenrecord":
             suffix = self.default_suffix_video
 
-        print("pulling to local...")
+        UiUtils.sprint("pulling to local...")
         res = os.popen("adb -s {} pull {}{}{} {}{}"
                        .format(serialno, self.default_save_path_android, self.default_name_base,
                                suffix, self.default_save_path, name_safe)).read()
-        print("[adb]{}".format(res), end="")
+        UiUtils.sprint(res, "[adb]", end="")  #@#@#
+        # UiUtils.sprint("[adb]{}".format(res), end="")
 
         if not "error" in res:
-            print("screenrecord finished, saved to \"{}{}\""
+            UiUtils.sprint("screenrecord finished, saved to \"{}{}\""
                   .format(self.default_save_path, name_safe))
             return True
         else:
-            print("pulling failed...")
+            UiUtils.sprint("pulling failed...")
             return False
 
     def _get_safe_names(self, name: str, suffix: str) -> str:
@@ -266,15 +272,16 @@ class ShotUtils():
         res = pp.communicate()[1].decode("utf-8").strip("\n ")  # error message here if exists
 
         if res:
-            print("rename failed...")
-            print("[terminal]" + res)
+            UiUtils.sprint("rename failed...")
+            UiUtils.sprint(res, "[terminal]")  #@#@#
+            # UiUtils.sprint("[terminal]" + res)
             self.current_name = old_name  # do not forget to reset
             return False
         else:
             if new_name + suffix != new_name_safe:
-                print("new name \"{}\" exists, add number at the end. ".format(new_name))
-            print(".../{} renamed to .../{}".format(old_name, new_name_safe))
-            input("press enter to continue...")
+                UiUtils.sprint("new name \"{}\" exists, add number at the end. ".format(new_name))
+            UiUtils.sprint(".../{} renamed to .../{}".format(old_name, new_name_safe))
+            UiUtils.sinput("press enter to continue...")
             return True
 
     def _get_resolution(self, serialno: str) -> str or bool:
@@ -289,8 +296,9 @@ class ShotUtils():
         res = pp.communicate()  # expected output in res[0], while error message in res[1] if exists
 
         if res[1]:
-            print("screencap failed...")
-            print("[adb]{}".format(res[1].decode("utf-8").strip("\n ")))
+            UiUtils.sprint("screencap failed...")
+            UiUtils.sprint(res[1].decode("utf-8").strip("\n "), "[adb]")  #@#@#
+            # UiUtils.sprint("[adb]{}".format(res[1].decode("utf-8").strip("\n ")))
             return False
         else:
             temp = res[0].decode("utf-8").strip("\n ").split(" ")[0]  # e.g. "init=1080x1920"
